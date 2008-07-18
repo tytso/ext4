@@ -150,6 +150,7 @@ struct swap_info_struct {
 	unsigned int max;
 	unsigned int inuse_pages;
 	int next;			/* next entry on swap list */
+	void (*notify_swap_entry_free_fn) (unsigned long);
 };
 
 struct swap_list_t {
@@ -309,6 +310,7 @@ extern struct swap_info_struct *get_swap_info_struct(unsigned);
 extern int can_share_swap_page(struct page *);
 extern int remove_exclusive_swap_page(struct page *);
 extern int remove_exclusive_swap_page_ref(struct page *);
+extern void set_notify_swap_entry_free(unsigned, void (*) (unsigned long));
 struct backing_dev_info;
 
 /* linux/mm/thrash.c */
