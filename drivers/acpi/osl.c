@@ -95,6 +95,11 @@ static DEFINE_SPINLOCK(acpi_res_lock);
 #define	OSI_STRING_LENGTH_MAX 64	/* arbitrary */
 static char osi_additional_string[OSI_STRING_LENGTH_MAX];
 
+#ifdef CONFIG_ACPI_CUSTOM_DSDT_INITRD
+static __initdata int acpi_no_initrd_override;
+extern struct acpi_table_header *acpi_find_dsdt_initrd(void);
+#endif
+
 /*
  * The story of _OSI(Linux)
  *
@@ -327,6 +332,16 @@ acpi_os_table_override(struct acpi_table_header * existing_table,
 	if (strncmp(existing_table->signature, "DSDT", 4) == 0)
 		*new_table = (struct acpi_table_header *)AmlCode;
 #endif
+#ifdef CONFIG_ACPI_CUSTOM_DSDT_INITRD
+	if ((strncmp(existing_table->signature, "DSDT", 4) == 0) &&
+	    !acpi_no_initrd_override) {
+		struct acpi_table_header *initrd_table;
+
+		initrd_table = acpi_find_dsdt_initrd();
+		if (initrd_table)
+			*new_table = initrd_table;
+	}
+#endif
 	if (*new_table != NULL) {
 		printk(KERN_WARNING PREFIX "Override [%4.4s-%8.8s], "
 			   "this is unsafe: tainting kernel\n",
@@ -336,6 +351,15 @@ acpi_os_table_override(struct acpi_table_header * existing_table,
 	}
 	return AE_OK;
 }
+
+#ifdef CONFIG_ACPI_CUSTOM_DSDT_INITRD
+static int __init acpi_no_initrd_override_setup(char *s)
+{
+	acpi_no_initrd_override = 1;
+	return 1;
+}
+__setup("acpi_no_initrd_override", acpi_no_initrd_override_setup);
+#endif
 
 static irqreturn_t acpi_irq(int irq, void *dev_id)
 {
