@@ -126,6 +126,11 @@ static int cx8802_start_dma(struct cx8802_dev    *dev,
 			cx_write(TS_VALERR_CNTRL, 0);
 			udelay(100);
 			break;
+                case CX88_BOARD_WINFAST_DTV2000H_2:
+                        /* switch signal input to antena */
+                        cx_write(MO_GP0_IO, 0x00017300);
+                        cx_write(TS_SOP_STAT, 0x00);
+			break;
 		default:
 			cx_write(TS_SOP_STAT, 0x00);
 			break;
