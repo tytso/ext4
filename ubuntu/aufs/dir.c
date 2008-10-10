@@ -544,5 +544,4 @@ struct file_operations aufs_dir_fop = {
 	.release	= aufs_release_dir,
 	.flush		= aufs_flush,
 	.fsync		= aufs_fsync_dir,
-	.fsetattr	= aufs_fsetattr,
 };

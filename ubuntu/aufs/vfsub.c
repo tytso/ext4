@@ -127,9 +127,9 @@ int do_vfsub_create(struct inode *dir, struct dentry *dentry, int mode,
 }
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 27)
-#define VfsubSymlinkArgs	dir, dentry, NULL, symname
+#define VfsubSymlinkArgs	dir, dentry, symname
 #else
-#define VfsubSymlinkArgs	dir, dentry, NULL, symname, mode
+#define VfsubSymlinkArgs	dir, dentry, symname, mode
 #endif
 
 int do_vfsub_symlink(struct inode *dir, struct dentry *dentry,
@@ -511,7 +511,6 @@ struct notify_change_args {
 	struct dentry *h_dentry;
 	struct iattr *ia;
 	struct vfsub_args *vargs;
-	struct file *file;
 };
 
 static void call_notify_change(void *args)
@@ -528,7 +527,7 @@ static void call_notify_change(void *args)
 	if (!IS_IMMUTABLE(h_inode) && !IS_APPEND(h_inode)) {
 		vfsub_ignore(a->vargs);
 		lockdep_off();
-		*a->errp = fnotify_change(a->h_dentry, NULL, a->ia, a->file);
+		*a->errp = notify_change(a->h_dentry, NULL, a->ia);
 		lockdep_on();
 		if (!*a->errp)
 			au_update_fuse_h_inode(NULL, a->h_dentry); /*ignore*/
@@ -560,8 +559,8 @@ static void vfsub_notify_change_dlgt(struct notify_change_args *args,
 }
 #endif
 
-int vfsub_fnotify_change(struct dentry *dentry, struct iattr *ia,
-			struct vfsub_args *vargs, struct file *file)
+int vfsub_notify_change(struct dentry *dentry, struct iattr *ia,
+			struct vfsub_args *vargs)
 {
 	int err;
 	struct notify_change_args args = {
@@ -603,12 +602,6 @@ int vfsub_sio_notify_change(struct au_hinode *hdir, struct dentry *dentry,
 
 	AuTraceErr(err);
 	return err;
-}
-
-int vfsub_notify_change(struct dentry *dentry, struct iattr *ia,
-			struct vfsub_args *vargs)
-{
-	return vfsub_fnotify_change(dentry, ia, vargs, NULL);
 }
 
 /* ---------------------------------------------------------------------- */

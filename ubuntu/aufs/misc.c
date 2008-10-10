@@ -274,12 +274,13 @@ int au_copy_file(struct file *dst, struct file *src, loff_t len,
 		if (err == 1) {
 			ia = (void *)buf;
 			ia->ia_size = dst->f_pos;
-			ia->ia_valid = ATTR_SIZE;
+			ia->ia_valid = ATTR_SIZE | ATTR_FILE;
+			ia->ia_file = dst;
 			vfsub_args_reinit(vargs);
 			vfsub_ign_hinode(vargs, vfsub_events_notify_change(ia),
 					 hdir);
 			mutex_lock_nested(&h_i->i_mutex, AuLsc_I_CHILD2);
-                        err = vfsub_fnotify_change(h_d, ia, vargs, dst);
+			err = vfsub_notify_change(h_d, ia, vargs);
 			mutex_unlock(&h_i->i_mutex);
 		}
 	}
