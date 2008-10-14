@@ -1984,6 +1984,15 @@ static struct usb_device_id uvc_ids[] = {
 	  .bInterfaceSubClass	= 1,
 	  .bInterfaceProtocol	= 0,
 	  .driver_info		= UVC_QUIRK_PROBE_MINMAX },
+	/* COMPAL JHL90 */
+        { .match_flags          = USB_DEVICE_ID_MATCH_DEVICE
+                                | USB_DEVICE_ID_MATCH_INT_INFO,
+          .idVendor             = 0x064e,
+          .idProduct            = 0xa115,
+          .bInterfaceClass      = USB_CLASS_VIDEO,
+          .bInterfaceSubClass   = 1,
+          .bInterfaceProtocol   = 0,
+          .driver_info          = UVC_QUIRK_PROBE_MINMAX },
 	/* Generic USB Video Class */
 	{ USB_INTERFACE_INFO(USB_CLASS_VIDEO, 1, 0) },
 	{}
