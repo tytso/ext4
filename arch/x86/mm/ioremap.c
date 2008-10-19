@@ -688,7 +688,7 @@ static void __init __iomem *__early_ioremap(unsigned long phys_addr, unsigned lo
 	 */
 	offset = phys_addr & ~PAGE_MASK;
 	phys_addr &= PAGE_MASK;
-	size = PAGE_ALIGN(last_addr + 1) - phys_addr;
+	size = PAGE_ALIGN(last_addr) - phys_addr;
 
 	/*
 	 * Mappings have to fit in the FIX_BTMAP area.
