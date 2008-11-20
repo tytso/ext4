@@ -367,72 +367,80 @@ int security_inode_init_security(struct inode *inode, struct inode *dir,
 }
 EXPORT_SYMBOL(security_inode_init_security);
 
-int security_inode_create(struct inode *dir, struct dentry *dentry, int mode)
+int security_inode_create(struct inode *dir, struct dentry *dentry,
+			  struct vfsmount *mnt, int mode)
 {
 	if (unlikely(IS_PRIVATE(dir)))
 		return 0;
-	return security_ops->inode_create(dir, dentry, mode);
+	return security_ops->inode_create(dir, dentry, mnt, mode);
 }
 
-int security_inode_link(struct dentry *old_dentry, struct inode *dir,
-			 struct dentry *new_dentry)
+int security_inode_link(struct dentry *old_dentry, struct vfsmount *old_mnt,
+			struct inode *dir, struct dentry *new_dentry,
+			struct vfsmount *new_mnt)
 {
 	if (unlikely(IS_PRIVATE(old_dentry->d_inode)))
 		return 0;
-	return security_ops->inode_link(old_dentry, dir, new_dentry);
+	return security_ops->inode_link(old_dentry, old_mnt, dir,
+					 new_dentry, new_mnt);
 }
 
-int security_inode_unlink(struct inode *dir, struct dentry *dentry)
+int security_inode_unlink(struct inode *dir, struct dentry *dentry,
+			  struct vfsmount *mnt)
 {
 	if (unlikely(IS_PRIVATE(dentry->d_inode)))
 		return 0;
-	return security_ops->inode_unlink(dir, dentry);
+	return security_ops->inode_unlink(dir, dentry, mnt);
 }
 
 int security_inode_symlink(struct inode *dir, struct dentry *dentry,
-			    const char *old_name)
+			   struct vfsmount *mnt, const char *old_name)
 {
 	if (unlikely(IS_PRIVATE(dir)))
 		return 0;
-	return security_ops->inode_symlink(dir, dentry, old_name);
+	return security_ops->inode_symlink(dir, dentry, mnt, old_name);
 }
 
-int security_inode_mkdir(struct inode *dir, struct dentry *dentry, int mode)
+int security_inode_mkdir(struct inode *dir, struct dentry *dentry,
+			 struct vfsmount *mnt, int mode)
 {
 	if (unlikely(IS_PRIVATE(dir)))
 		return 0;
-	return security_ops->inode_mkdir(dir, dentry, mode);
+	return security_ops->inode_mkdir(dir, dentry, mnt, mode);
 }
 
-int security_inode_rmdir(struct inode *dir, struct dentry *dentry)
+int security_inode_rmdir(struct inode *dir, struct dentry *dentry,
+			 struct vfsmount *mnt)
 {
 	if (unlikely(IS_PRIVATE(dentry->d_inode)))
 		return 0;
-	return security_ops->inode_rmdir(dir, dentry);
+	return security_ops->inode_rmdir(dir, dentry, mnt);
 }
 
-int security_inode_mknod(struct inode *dir, struct dentry *dentry, int mode, dev_t dev)
+int security_inode_mknod(struct inode *dir, struct dentry *dentry,
+			 struct vfsmount *mnt, int mode, dev_t dev)
 {
 	if (unlikely(IS_PRIVATE(dir)))
 		return 0;
-	return security_ops->inode_mknod(dir, dentry, mode, dev);
+	return security_ops->inode_mknod(dir, dentry, mnt, mode, dev);
 }
 
 int security_inode_rename(struct inode *old_dir, struct dentry *old_dentry,
-			   struct inode *new_dir, struct dentry *new_dentry)
+			  struct vfsmount *old_mnt, struct inode *new_dir,
+			  struct dentry *new_dentry, struct vfsmount *new_mnt)
 {
         if (unlikely(IS_PRIVATE(old_dentry->d_inode) ||
             (new_dentry->d_inode && IS_PRIVATE(new_dentry->d_inode))))
 		return 0;
-	return security_ops->inode_rename(old_dir, old_dentry,
-					   new_dir, new_dentry);
+	return security_ops->inode_rename(old_dir, old_dentry, old_mnt,
+					   new_dir, new_dentry, new_mnt);
 }
 
-int security_inode_readlink(struct dentry *dentry)
+int security_inode_readlink(struct dentry *dentry, struct vfsmount *mnt)
 {
 	if (unlikely(IS_PRIVATE(dentry->d_inode)))
 		return 0;
-	return security_ops->inode_readlink(dentry);
+	return security_ops->inode_readlink(dentry, mnt);
 }
 
 int security_inode_follow_link(struct dentry *dentry, struct nameidata *nd)
@@ -449,11 +457,12 @@ int security_inode_permission(struct inode *inode, int mask)
 	return security_ops->inode_permission(inode, mask);
 }
 
-int security_inode_setattr(struct dentry *dentry, struct iattr *attr)
+int security_inode_setattr(struct dentry *dentry, struct vfsmount *mnt,
+			   struct iattr *attr)
 {
 	if (unlikely(IS_PRIVATE(dentry->d_inode)))
 		return 0;
-	return security_ops->inode_setattr(dentry, attr);
+	return security_ops->inode_setattr(dentry, mnt, attr);
 }
 EXPORT_SYMBOL_GPL(security_inode_setattr);
 
@@ -471,41 +480,48 @@ void security_inode_delete(struct inode *inode)
 	security_ops->inode_delete(inode);
 }
 
-int security_inode_setxattr(struct dentry *dentry, const char *name,
-			    const void *value, size_t size, int flags)
+int security_inode_setxattr(struct dentry *dentry, struct vfsmount *mnt,
+			    const char *name, const void *value, size_t size,
+			    int flags, struct file *file)
 {
 	if (unlikely(IS_PRIVATE(dentry->d_inode)))
 		return 0;
-	return security_ops->inode_setxattr(dentry, name, value, size, flags);
+	return security_ops->inode_setxattr(dentry, mnt, name, value, size,
+					    flags, file);
 }
 
-void security_inode_post_setxattr(struct dentry *dentry, const char *name,
-				  const void *value, size_t size, int flags)
+void security_inode_post_setxattr(struct dentry *dentry, struct vfsmount *mnt,
+				  const char *name, const void *value,
+				  size_t size, int flags)
 {
 	if (unlikely(IS_PRIVATE(dentry->d_inode)))
 		return;
-	security_ops->inode_post_setxattr(dentry, name, value, size, flags);
+	security_ops->inode_post_setxattr(dentry, mnt, name, value, size,
+					  flags);
 }
 
-int security_inode_getxattr(struct dentry *dentry, const char *name)
+int security_inode_getxattr(struct dentry *dentry, struct vfsmount *mnt,
+			    const char *name, struct file *file)
 {
 	if (unlikely(IS_PRIVATE(dentry->d_inode)))
 		return 0;
-	return security_ops->inode_getxattr(dentry, name);
+	return security_ops->inode_getxattr(dentry, mnt, name, file);
 }
 
-int security_inode_listxattr(struct dentry *dentry)
+int security_inode_listxattr(struct dentry *dentry, struct vfsmount *mnt,
+			     struct file *file)
 {
 	if (unlikely(IS_PRIVATE(dentry->d_inode)))
 		return 0;
-	return security_ops->inode_listxattr(dentry);
+	return security_ops->inode_listxattr(dentry, mnt, file);
 }
 
-int security_inode_removexattr(struct dentry *dentry, const char *name)
+int security_inode_removexattr(struct dentry *dentry, struct vfsmount *mnt,
+			       const char *name, struct file *file)
 {
 	if (unlikely(IS_PRIVATE(dentry->d_inode)))
 		return 0;
-	return security_ops->inode_removexattr(dentry, name);
+	return security_ops->inode_removexattr(dentry, mnt, name, file);
 }
 
 int security_inode_need_killpriv(struct dentry *dentry)

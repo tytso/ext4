@@ -387,7 +387,7 @@ nfsd_setattr(struct svc_rqst *rqstp, struct svc_fh *fhp, struct iattr *iap,
 	err = nfserr_notsync;
 	if (!check_guard || guardtime == inode->i_ctime.tv_sec) {
 		fh_lock(fhp);
-		host_err = notify_change(dentry, iap);
+		host_err = notify_change(dentry, fhp->fh_export->ex_path.mnt, iap);
 		err = nfserrno(host_err);
 		fh_unlock(fhp);
 	}
@@ -407,12 +407,13 @@ out_nfserr:
 #if defined(CONFIG_NFSD_V2_ACL) || \
     defined(CONFIG_NFSD_V3_ACL) || \
     defined(CONFIG_NFSD_V4)
-static ssize_t nfsd_getxattr(struct dentry *dentry, char *key, void **buf)
+static ssize_t nfsd_getxattr(struct dentry *dentry, struct vfsmount *mnt,
+			     char *key, void **buf)
 {
 	ssize_t buflen;
 	ssize_t ret;
 
-	buflen = vfs_getxattr(dentry, key, NULL, 0);
+	buflen = vfs_getxattr(dentry, mnt, key, NULL, 0, NULL);
 	if (buflen <= 0)
 		return buflen;
 
@@ -420,7 +421,7 @@ static ssize_t nfsd_getxattr(struct dentry *dentry, char *key, void **buf)
 	if (!*buf)
 		return -ENOMEM;
 
-	ret = vfs_getxattr(dentry, key, *buf, buflen);
+	ret = vfs_getxattr(dentry, mnt, key, *buf, buflen, NULL);
 	if (ret < 0)
 		kfree(*buf);
 	return ret;
@@ -429,7 +430,8 @@ static ssize_t nfsd_getxattr(struct dentry *dentry, char *key, void **buf)
 
 #if defined(CONFIG_NFSD_V4)
 static int
-set_nfsv4_acl_one(struct dentry *dentry, struct posix_acl *pacl, char *key)
+set_nfsv4_acl_one(struct dentry *dentry, struct vfsmount *mnt,
+		  struct posix_acl *pacl, char *key)
 {
 	int len;
 	size_t buflen;
@@ -448,7 +450,7 @@ set_nfsv4_acl_one(struct dentry *dentry, struct posix_acl *pacl, char *key)
 		goto out;
 	}
 
-	error = vfs_setxattr(dentry, key, buf, len, 0);
+	error = vfs_setxattr(dentry, mnt, key, buf, len, 0, NULL);
 out:
 	kfree(buf);
 	return error;
@@ -461,6 +463,7 @@ nfsd4_set_nfs4_acl(struct svc_rqst *rqstp, struct svc_fh *fhp,
 	__be32 error;
 	int host_error;
 	struct dentry *dentry;
+	struct vfsmount *mnt;
 	struct inode *inode;
 	struct posix_acl *pacl = NULL, *dpacl = NULL;
 	unsigned int flags = 0;
@@ -471,6 +474,7 @@ nfsd4_set_nfs4_acl(struct svc_rqst *rqstp, struct svc_fh *fhp,
 		return error;
 
 	dentry = fhp->fh_dentry;
+	mnt = fhp->fh_export->ex_path.mnt;
 	inode = dentry->d_inode;
 	if (S_ISDIR(inode->i_mode))
 		flags = NFS4_ACL_DIR;
@@ -481,12 +485,14 @@ nfsd4_set_nfs4_acl(struct svc_rqst *rqstp, struct svc_fh *fhp,
 	} else if (host_error < 0)
 		goto out_nfserr;
 
-	host_error = set_nfsv4_acl_one(dentry, pacl, POSIX_ACL_XATTR_ACCESS);
+	host_error = set_nfsv4_acl_one(dentry, mnt, pacl,
+				       POSIX_ACL_XATTR_ACCESS);
 	if (host_error < 0)
 		goto out_release;
 
 	if (S_ISDIR(inode->i_mode))
-		host_error = set_nfsv4_acl_one(dentry, dpacl, POSIX_ACL_XATTR_DEFAULT);
+		host_error = set_nfsv4_acl_one(dentry, mnt, dpacl,
+					       POSIX_ACL_XATTR_DEFAULT);
 
 out_release:
 	posix_acl_release(pacl);
@@ -499,13 +505,13 @@ out_nfserr:
 }
 
 static struct posix_acl *
-_get_posix_acl(struct dentry *dentry, char *key)
+_get_posix_acl(struct dentry *dentry, struct vfsmount *mnt, char *key)
 {
 	void *buf = NULL;
 	struct posix_acl *pacl = NULL;
 	int buflen;
 
-	buflen = nfsd_getxattr(dentry, key, &buf);
+	buflen = nfsd_getxattr(dentry, mnt, key, &buf);
 	if (!buflen)
 		buflen = -ENODATA;
 	if (buflen <= 0)
@@ -517,14 +523,15 @@ _get_posix_acl(struct dentry *dentry, char *key)
 }
 
 int
-nfsd4_get_nfs4_acl(struct svc_rqst *rqstp, struct dentry *dentry, struct nfs4_acl **acl)
+nfsd4_get_nfs4_acl(struct svc_rqst *rqstp, struct dentry *dentry,
+		   struct vfsmount *mnt, struct nfs4_acl **acl)
 {
 	struct inode *inode = dentry->d_inode;
 	int error = 0;
 	struct posix_acl *pacl = NULL, *dpacl = NULL;
 	unsigned int flags = 0;
 
-	pacl = _get_posix_acl(dentry, POSIX_ACL_XATTR_ACCESS);
+	pacl = _get_posix_acl(dentry, mnt, POSIX_ACL_XATTR_ACCESS);
 	if (IS_ERR(pacl) && PTR_ERR(pacl) == -ENODATA)
 		pacl = posix_acl_from_mode(inode->i_mode, GFP_KERNEL);
 	if (IS_ERR(pacl)) {
@@ -534,7 +541,7 @@ nfsd4_get_nfs4_acl(struct svc_rqst *rqstp, struct dentry *dentry, struct nfs4_ac
 	}
 
 	if (S_ISDIR(inode->i_mode)) {
-		dpacl = _get_posix_acl(dentry, POSIX_ACL_XATTR_DEFAULT);
+		dpacl = _get_posix_acl(dentry, mnt, POSIX_ACL_XATTR_DEFAULT);
 		if (IS_ERR(dpacl) && PTR_ERR(dpacl) == -ENODATA)
 			dpacl = NULL;
 		else if (IS_ERR(dpacl)) {
@@ -947,13 +954,13 @@ out:
 	return err;
 }
 
-static void kill_suid(struct dentry *dentry)
+static void kill_suid(struct dentry *dentry, struct vfsmount *mnt)
 {
 	struct iattr	ia;
 	ia.ia_valid = ATTR_KILL_SUID | ATTR_KILL_SGID | ATTR_KILL_PRIV;
 
 	mutex_lock(&dentry->d_inode->i_mutex);
-	notify_change(dentry, &ia);
+	notify_change(dentry, mnt, &ia);
 	mutex_unlock(&dentry->d_inode->i_mutex);
 }
 
@@ -1012,7 +1019,7 @@ nfsd_vfs_write(struct svc_rqst *rqstp, struct svc_fh *fhp, struct file *file,
 
 	/* clear setuid/setgid flag after write */
 	if (host_err >= 0 && (inode->i_mode & (S_ISUID | S_ISGID)))
-		kill_suid(dentry);
+		kill_suid(dentry, exp->ex_path.mnt);
 
 	if (host_err >= 0 && stable) {
 		static ino_t	last_ino;
@@ -1190,6 +1197,7 @@ nfsd_create(struct svc_rqst *rqstp, struct svc_fh *fhp,
 		int type, dev_t rdev, struct svc_fh *resfhp)
 {
 	struct dentry	*dentry, *dchild = NULL;
+	struct svc_export *exp;
 	struct inode	*dirp;
 	__be32		err;
 	__be32		err2;
@@ -1207,6 +1215,7 @@ nfsd_create(struct svc_rqst *rqstp, struct svc_fh *fhp,
 		goto out;
 
 	dentry = fhp->fh_dentry;
+	exp = fhp->fh_export;
 	dirp = dentry->d_inode;
 
 	err = nfserr_notdir;
@@ -1223,7 +1232,7 @@ nfsd_create(struct svc_rqst *rqstp, struct svc_fh *fhp,
 		host_err = PTR_ERR(dchild);
 		if (IS_ERR(dchild))
 			goto out_nfserr;
-		err = fh_compose(resfhp, fhp->fh_export, dchild, fhp);
+		err = fh_compose(resfhp, exp, dchild, fhp);
 		if (err)
 			goto out;
 	} else {
@@ -1273,13 +1282,14 @@ nfsd_create(struct svc_rqst *rqstp, struct svc_fh *fhp,
 		host_err = vfs_create(dirp, dchild, iap->ia_mode, NULL);
 		break;
 	case S_IFDIR:
-		host_err = vfs_mkdir(dirp, dchild, iap->ia_mode);
+		host_err = vfs_mkdir(dirp, dchild, exp->ex_path.mnt, iap->ia_mode);
 		break;
 	case S_IFCHR:
 	case S_IFBLK:
 	case S_IFIFO:
 	case S_IFSOCK:
-		host_err = vfs_mknod(dirp, dchild, iap->ia_mode, rdev);
+		host_err = vfs_mknod(dirp, dchild, exp->ex_path.mnt,
+				     iap->ia_mode, rdev);
 		break;
 	}
 	if (host_err < 0) {
@@ -1287,7 +1297,7 @@ nfsd_create(struct svc_rqst *rqstp, struct svc_fh *fhp,
 		goto out_nfserr;
 	}
 
-	if (EX_ISSYNC(fhp->fh_export)) {
+	if (EX_ISSYNC(exp)) {
 		err = nfserrno(nfsd_sync_dir(dentry));
 		write_inode_now(dchild->d_inode, 1);
 	}
@@ -1517,6 +1527,7 @@ nfsd_symlink(struct svc_rqst *rqstp, struct svc_fh *fhp,
 				struct iattr *iap)
 {
 	struct dentry	*dentry, *dnew;
+	struct svc_export *exp;
 	__be32		err, cerr;
 	int		host_err;
 
@@ -1541,6 +1552,7 @@ nfsd_symlink(struct svc_rqst *rqstp, struct svc_fh *fhp,
 	if (host_err)
 		goto out_nfserr;
 
+	exp = fhp->fh_export;
 	if (unlikely(path[plen] != 0)) {
 		char *path_alloced = kmalloc(plen+1, GFP_KERNEL);
 		if (path_alloced == NULL)
@@ -1548,14 +1560,16 @@ nfsd_symlink(struct svc_rqst *rqstp, struct svc_fh *fhp,
 		else {
 			strncpy(path_alloced, path, plen);
 			path_alloced[plen] = 0;
-			host_err = vfs_symlink(dentry->d_inode, dnew, path_alloced);
+			host_err = vfs_symlink(dentry->d_inode, dnew,
+					       exp->ex_path.mnt, path_alloced);
 			kfree(path_alloced);
 		}
 	} else
-		host_err = vfs_symlink(dentry->d_inode, dnew, path);
+		host_err = vfs_symlink(dentry->d_inode, dnew, exp->ex_path.mnt,
+				       path);
 
 	if (!host_err) {
-		if (EX_ISSYNC(fhp->fh_export))
+		if (EX_ISSYNC(exp))
 			host_err = nfsd_sync_dir(dentry);
 	}
 	err = nfserrno(host_err);
@@ -1563,7 +1577,7 @@ nfsd_symlink(struct svc_rqst *rqstp, struct svc_fh *fhp,
 
 	mnt_drop_write(fhp->fh_export->ex_path.mnt);
 
-	cerr = fh_compose(resfhp, fhp->fh_export, dnew, fhp);
+	cerr = fh_compose(resfhp, exp, dnew, fhp);
 	dput(dnew);
 	if (err==0) err = cerr;
 out:
@@ -1618,7 +1632,8 @@ nfsd_link(struct svc_rqst *rqstp, struct svc_fh *ffhp,
 		err = nfserrno(host_err);
 		goto out_dput;
 	}
-	host_err = vfs_link(dold, dirp, dnew);
+	host_err = vfs_link(dold, tfhp->fh_export->ex_path.mnt, dirp,
+			    dnew, ffhp->fh_export->ex_path.mnt);
 	if (!host_err) {
 		if (EX_ISSYNC(ffhp->fh_export)) {
 			err = nfserrno(nfsd_sync_dir(ddir));
@@ -1719,7 +1734,8 @@ nfsd_rename(struct svc_rqst *rqstp, struct svc_fh *ffhp, char *fname, int flen,
 	if (host_err)
 		goto out_dput_new;
 
-	host_err = vfs_rename(fdir, odentry, tdir, ndentry);
+	host_err = vfs_rename(fdir, odentry, ffhp->fh_export->ex_path.mnt,
+			      tdir, ndentry, tfhp->fh_export->ex_path.mnt);
 	if (!host_err && EX_ISSYNC(tfhp->fh_export)) {
 		host_err = nfsd_sync_dir(tdentry);
 		if (!host_err)
@@ -1757,6 +1773,7 @@ nfsd_unlink(struct svc_rqst *rqstp, struct svc_fh *fhp, int type,
 				char *fname, int flen)
 {
 	struct dentry	*dentry, *rdentry;
+	struct svc_export *exp;
 	struct inode	*dirp;
 	__be32		err;
 	int		host_err;
@@ -1771,6 +1788,7 @@ nfsd_unlink(struct svc_rqst *rqstp, struct svc_fh *fhp, int type,
 	fh_lock_nested(fhp, I_MUTEX_PARENT);
 	dentry = fhp->fh_dentry;
 	dirp = dentry->d_inode;
+	exp = fhp->fh_export;
 
 	rdentry = lookup_one_len(fname, dentry, flen);
 	host_err = PTR_ERR(rdentry);
@@ -1792,21 +1810,21 @@ nfsd_unlink(struct svc_rqst *rqstp, struct svc_fh *fhp, int type,
 
 	if (type != S_IFDIR) { /* It's UNLINK */
 #ifdef MSNFS
-		if ((fhp->fh_export->ex_flags & NFSEXP_MSNFS) &&
+		if ((exp->ex_flags & NFSEXP_MSNFS) &&
 			(atomic_read(&rdentry->d_count) > 1)) {
 			host_err = -EPERM;
 		} else
 #endif
-		host_err = vfs_unlink(dirp, rdentry);
+		host_err = vfs_unlink(dirp, rdentry, exp->ex_path.mnt);
 	} else { /* It's RMDIR */
-		host_err = vfs_rmdir(dirp, rdentry);
+		host_err = vfs_rmdir(dirp, rdentry, exp->ex_path.mnt);
 	}
 
 	dput(rdentry);
 
 	if (host_err)
 		goto out_drop;
-	if (EX_ISSYNC(fhp->fh_export))
+	if (EX_ISSYNC(exp))
 		host_err = nfsd_sync_dir(dentry);
 
 out_drop:
@@ -2143,7 +2161,8 @@ nfsd_get_posix_acl(struct svc_fh *fhp, int type)
 		return ERR_PTR(-EOPNOTSUPP);
 	}
 
-	size = nfsd_getxattr(fhp->fh_dentry, name, &value);
+	size = nfsd_getxattr(fhp->fh_dentry, fhp->fh_export->ex_path.mnt, name,
+			     &value);
 	if (size < 0)
 		return ERR_PTR(size);
 
@@ -2155,6 +2174,7 @@ nfsd_get_posix_acl(struct svc_fh *fhp, int type)
 int
 nfsd_set_posix_acl(struct svc_fh *fhp, int type, struct posix_acl *acl)
 {
+	struct vfsmount *mnt;
 	struct inode *inode = fhp->fh_dentry->d_inode;
 	char *name;
 	void *value = NULL;
@@ -2187,21 +2207,24 @@ nfsd_set_posix_acl(struct svc_fh *fhp, int type, struct posix_acl *acl)
 	} else
 		size = 0;
 
-	error = mnt_want_write(fhp->fh_export->ex_path.mnt);
+	mnt = fhp->fh_export->ex_path.mnt;
+	error = mnt_want_write(mnt);
 	if (error)
 		goto getout;
 	if (size)
-		error = vfs_setxattr(fhp->fh_dentry, name, value, size, 0);
+		error = vfs_setxattr(fhp->fh_dentry, mnt, name, value, size, 0,
+				     NULL);
 	else {
 		if (!S_ISDIR(inode->i_mode) && type == ACL_TYPE_DEFAULT)
 			error = 0;
 		else {
-			error = vfs_removexattr(fhp->fh_dentry, name);
+			error = vfs_removexattr(fhp->fh_dentry, mnt, name,
+						NULL);
 			if (error == -ENODATA)
 				error = 0;
 		}
 	}
-	mnt_drop_write(fhp->fh_export->ex_path.mnt);
+	mnt_drop_write(mnt);
 
 getout:
 	kfree(value);

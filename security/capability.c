@@ -155,52 +155,56 @@ static int cap_inode_init_security(struct inode *inode, struct inode *dir,
 }
 
 static int cap_inode_create(struct inode *inode, struct dentry *dentry,
-			    int mask)
+			    struct vfsmount *mnt, int mask)
 {
 	return 0;
 }
 
-static int cap_inode_link(struct dentry *old_dentry, struct inode *inode,
-			  struct dentry *new_dentry)
+static int cap_inode_link(struct dentry *old_dentry, struct vfsmount *old_mnt,
+			  struct inode *inode, struct dentry *new_dentry,
+			  struct vfsmount *new_mnt)
 {
 	return 0;
 }
 
-static int cap_inode_unlink(struct inode *inode, struct dentry *dentry)
+static int cap_inode_unlink(struct inode *inode, struct dentry *dentry,
+			    struct vfsmount *mnt)
 {
 	return 0;
 }
 
 static int cap_inode_symlink(struct inode *inode, struct dentry *dentry,
-			     const char *name)
+			     struct vfsmount *mnt, const char *name)
 {
 	return 0;
 }
 
 static int cap_inode_mkdir(struct inode *inode, struct dentry *dentry,
-			   int mask)
+			   struct vfsmount *mnt, int mask)
 {
 	return 0;
 }
 
-static int cap_inode_rmdir(struct inode *inode, struct dentry *dentry)
+static int cap_inode_rmdir(struct inode *inode, struct dentry *dentry,
+			   struct vfsmount *mnt)
 {
 	return 0;
 }
 
 static int cap_inode_mknod(struct inode *inode, struct dentry *dentry,
-			   int mode, dev_t dev)
+			   struct vfsmount *mnt, int mode, dev_t dev)
 {
 	return 0;
 }
 
 static int cap_inode_rename(struct inode *old_inode, struct dentry *old_dentry,
-			    struct inode *new_inode, struct dentry *new_dentry)
+			    struct vfsmount *old_mnt, struct inode *new_inode,
+			    struct dentry *new_dentry, struct vfsmount *new_mnt)
 {
 	return 0;
 }
 
-static int cap_inode_readlink(struct dentry *dentry)
+static int cap_inode_readlink(struct dentry *dentry, struct vfsmount *mnt)
 {
 	return 0;
 }
@@ -216,7 +220,8 @@ static int cap_inode_permission(struct inode *inode, int mask)
 	return 0;
 }
 
-static int cap_inode_setattr(struct dentry *dentry, struct iattr *iattr)
+static int cap_inode_setattr(struct dentry *dentry, struct vfsmount *mnt,
+			     struct iattr *iattr)
 {
 	return 0;
 }
@@ -230,17 +235,20 @@ static void cap_inode_delete(struct inode *ino)
 {
 }
 
-static void cap_inode_post_setxattr(struct dentry *dentry, const char *name,
-				    const void *value, size_t size, int flags)
+static void cap_inode_post_setxattr(struct dentry *dentry, struct vfsmount *mnt,
+				    const char *name, const void *value,
+				    size_t size, int flags)
 {
 }
 
-static int cap_inode_getxattr(struct dentry *dentry, const char *name)
+static int cap_inode_getxattr(struct dentry *dentry, struct vfsmount *mnt,
+			      const char *name, struct file *file)
 {
 	return 0;
 }
 
-static int cap_inode_listxattr(struct dentry *dentry)
+static int cap_inode_listxattr(struct dentry *dentry, struct vfsmount *mnt,
+			       struct file *file)
 {
 	return 0;
 }

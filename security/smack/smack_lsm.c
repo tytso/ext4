@@ -432,8 +432,9 @@ static int smack_inode_init_security(struct inode *inode, struct inode *dir,
  *
  * Returns 0 if access is permitted, an error code otherwise
  */
-static int smack_inode_link(struct dentry *old_dentry, struct inode *dir,
-			    struct dentry *new_dentry)
+static int smack_inode_link(struct dentry *old_dentry, struct vfsmount *old_mnt,
+			    struct inode *dir,
+			    struct dentry *new_dentry, struct vfsmount *new_mnt)
 {
 	int rc;
 	char *isp;
@@ -457,7 +458,8 @@ static int smack_inode_link(struct dentry *old_dentry, struct inode *dir,
  * Returns 0 if current can write the containing directory
  * and the object, error code otherwise
  */
-static int smack_inode_unlink(struct inode *dir, struct dentry *dentry)
+static int smack_inode_unlink(struct inode *dir, struct dentry *dentry,
+			      struct vfsmount *mnt)
 {
 	struct inode *ip = dentry->d_inode;
 	int rc;
@@ -483,7 +485,8 @@ static int smack_inode_unlink(struct inode *dir, struct dentry *dentry)
  * Returns 0 if current can write the containing directory
  * and the directory, error code otherwise
  */
-static int smack_inode_rmdir(struct inode *dir, struct dentry *dentry)
+static int smack_inode_rmdir(struct inode *dir, struct dentry *dentry,
+			     struct vfsmount *mnt)
 {
 	int rc;
 
@@ -514,8 +517,10 @@ static int smack_inode_rmdir(struct inode *dir, struct dentry *dentry)
  */
 static int smack_inode_rename(struct inode *old_inode,
 			      struct dentry *old_dentry,
+			      struct vfsmount *old_mnt,
 			      struct inode *new_inode,
-			      struct dentry *new_dentry)
+			      struct dentry *new_dentry,
+			      struct vfsmount *new_mnt)
 {
 	int rc;
 	char *isp;
@@ -559,7 +564,8 @@ static int smack_inode_permission(struct inode *inode, int mask)
  *
  * Returns 0 if access is permitted, an error code otherwise
  */
-static int smack_inode_setattr(struct dentry *dentry, struct iattr *iattr)
+static int smack_inode_setattr(struct dentry *dentry, struct vfsmount *mnt,
+			       struct iattr *iattr)
 {
 	/*
 	 * Need to allow for clearing the setuid bit.
@@ -594,8 +600,9 @@ static int smack_inode_getattr(struct vfsmount *mnt, struct dentry *dentry)
  *
  * Returns 0 if access is permitted, an error code otherwise
  */
-static int smack_inode_setxattr(struct dentry *dentry, const char *name,
-				const void *value, size_t size, int flags)
+static int smack_inode_setxattr(struct dentry *dentry, struct vfsmount *mnt,
+				const char *name, const void *value,
+				size_t size, int flags, struct file *file)
 {
 	int rc = 0;
 
@@ -605,7 +612,7 @@ static int smack_inode_setxattr(struct dentry *dentry, const char *name,
 		if (!capable(CAP_MAC_ADMIN))
 			rc = -EPERM;
 	} else
-		rc = cap_inode_setxattr(dentry, name, value, size, flags);
+		rc = cap_inode_setxattr(dentry, mnt, name, value, size, flags, file);
 
 	if (rc == 0)
 		rc = smk_curacc(smk_of_inode(dentry->d_inode), MAY_WRITE);
@@ -624,7 +631,8 @@ static int smack_inode_setxattr(struct dentry *dentry, const char *name,
  * Set the pointer in the inode blob to the entry found
  * in the master label list.
  */
-static void smack_inode_post_setxattr(struct dentry *dentry, const char *name,
+static void smack_inode_post_setxattr(struct dentry *dentry,
+				      struct vfsmount *mnt, const char *name,
 				      const void *value, size_t size, int flags)
 {
 	struct inode_smack *isp;
@@ -661,7 +669,8 @@ static void smack_inode_post_setxattr(struct dentry *dentry, const char *name,
  *
  * Returns 0 if access is permitted, an error code otherwise
  */
-static int smack_inode_getxattr(struct dentry *dentry, const char *name)
+static int smack_inode_getxattr(struct dentry *dentry, struct vfsmount *mnt,
+				const char *name, struct file *file)
 {
 	return smk_curacc(smk_of_inode(dentry->d_inode), MAY_READ);
 }
@@ -675,7 +684,8 @@ static int smack_inode_getxattr(struct dentry *dentry, const char *name)
  *
  * Returns 0 if access is permitted, an error code otherwise
  */
-static int smack_inode_removexattr(struct dentry *dentry, const char *name)
+static int smack_inode_removexattr(struct dentry *dentry, struct vfsmount *mnt,
+				   const char *name, struct file *file)
 {
 	int rc = 0;
 
@@ -685,7 +695,7 @@ static int smack_inode_removexattr(struct dentry *dentry, const char *name)
 		if (!capable(CAP_MAC_ADMIN))
 			rc = -EPERM;
 	} else
-		rc = cap_inode_removexattr(dentry, name);
+		rc = cap_inode_removexattr(dentry, mnt, name, file);
 
 	if (rc == 0)
 		rc = smk_curacc(smk_of_inode(dentry->d_inode), MAY_WRITE);
