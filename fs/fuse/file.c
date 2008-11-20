@@ -1470,6 +1470,11 @@ static loff_t fuse_file_llseek(struct file *file, loff_t offset, int origin)
 	return retval;
 }
 
+static int fuse_fsetattr(struct file *file, struct iattr *attr)
+{
+	return fuse_do_setattr(file->f_path.dentry, attr, file);
+}
+
 static const struct file_operations fuse_file_operations = {
 	.llseek		= fuse_file_llseek,
 	.read		= do_sync_read,
@@ -1483,6 +1488,7 @@ static const struct file_operations fuse_file_operations = {
 	.fsync		= fuse_fsync,
 	.lock		= fuse_file_lock,
 	.flock		= fuse_file_flock,
+	.fsetattr	= fuse_fsetattr,
 	.splice_read	= generic_file_splice_read,
 };
 
@@ -1496,6 +1502,7 @@ static const struct file_operations fuse_direct_io_file_operations = {
 	.fsync		= fuse_fsync,
 	.lock		= fuse_file_lock,
 	.flock		= fuse_file_flock,
+	.fsetattr	= fuse_fsetattr,
 	/* no mmap and splice_read */
 };
 

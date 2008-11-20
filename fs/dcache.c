@@ -1907,44 +1907,46 @@ static int prepend_name(char **buffer, int *buflen, struct qstr *name)
  * @root: root vfsmnt/dentry (may be modified by this function)
  * @buffer: buffer to return value in
  * @buflen: buffer length
+ * @flags: flags controling behavior of d_path
  *
- * Convert a dentry into an ASCII path name. If the entry has been deleted
- * the string " (deleted)" is appended. Note that this is ambiguous.
- *
- * Returns the buffer or an error code if the path was too long.
- *
- * "buflen" should be positive. Caller holds the dcache_lock.
+ * Convert a dentry into an ASCII path name. If the entry has been deleted,
+ * then if @flags has D_PATH_FAIL_DELETED set, ERR_PTR(-ENOENT) is returned.
+ * Otherwise, the string " (deleted)" is appended. Note that this is ambiguous.
  *
  * If path is not reachable from the supplied root, then the value of
- * root is changed (without modifying refcounts).
+ * root is changed (without modifying refcounts).  The path returned in this
+ * case will be relative (i.e., it will not start with a slash).
+ *
+ * Returns the buffer or an error code if the path was too long.
  */
 char *__d_path(const struct path *path, struct path *root,
-	       char *buffer, int buflen)
+	       char *buffer, int buflen, int flags)
 {
 	struct dentry *dentry = path->dentry;
 	struct vfsmount *vfsmnt = path->mnt;
-	char *end = buffer + buflen;
-	char *retval;
+	const unsigned char *name;
+	int namelen;
+
+	buffer += buflen;
+	prepend(&buffer, &buflen, "\0", 1);
 
 	spin_lock(&vfsmount_lock);
-	prepend(&end, &buflen, "\0", 1);
-	if (!IS_ROOT(dentry) && d_unhashed(dentry) &&
-		(prepend(&end, &buflen, " (deleted)", 10) != 0))
+	spin_lock(&dcache_lock);
+	if (!IS_ROOT(dentry) && d_unhashed(dentry)) {
+		if (flags & D_PATH_FAIL_DELETED) {
+			buffer = ERR_PTR(-ENOENT);
+			goto out;
+		}
+		if (prepend(&buffer, &buflen, " (deleted)", 10) != 0)
 			goto Elong;
-
+	}
 	if (buflen < 1)
 		goto Elong;
-	/* Get '/' right */
-	retval = end-1;
-	*retval = '/';
 
-	for (;;) {
+	while (dentry != root->dentry || vfsmnt != root->mnt) {
 		struct dentry * parent;
 
-		if (dentry == root->dentry && vfsmnt == root->mnt)
-			break;
 		if (dentry == vfsmnt->mnt_root || IS_ROOT(dentry)) {
-			/* Global root? */
 			if (vfsmnt->mnt_parent == vfsmnt) {
 				goto global_root;
 			}
@@ -1954,27 +1956,51 @@ char *__d_path(const struct path *path, struct path *root,
 		}
 		parent = dentry->d_parent;
 		prefetch(parent);
-		if ((prepend_name(&end, &buflen, &dentry->d_name) != 0) ||
-		    (prepend(&end, &buflen, "/", 1) != 0))
+		if ((prepend_name(&buffer, &buflen, &dentry->d_name) != 0) ||
+		    (prepend(&buffer, &buflen, "/", 1) != 0))
 			goto Elong;
-		retval = end;
 		dentry = parent;
 	}
+	/* Get '/' right. */
+	if (*buffer != '/' && prepend(&buffer, &buflen, "/", 1))
+		goto Elong;
 
 out:
+	spin_unlock(&dcache_lock);
 	spin_unlock(&vfsmount_lock);
-	return retval;
+	return buffer;
 
 global_root:
-	retval += 1;	/* hit the slash */
-	if (prepend_name(&retval, &buflen, &dentry->d_name) != 0)
+	/*
+	 * We went past the (vfsmount, dentry) we were looking for and have
+	 * either hit a root dentry, a lazily unmounted dentry, an
+	 * unconnected dentry, or the file is on a pseudo filesystem.
+	 */
+        namelen = dentry->d_name.len;
+	name = dentry->d_name.name;
+
+	/*
+	 * If this is a root dentry, then overwrite the slash.  This
+	 * will also DTRT with pseudo filesystems which have root
+	 * dentries named "foo:".
+	 */
+	if (IS_ROOT(dentry) && *buffer == '/') {
+		buffer++;
+		buflen++;
+	}
+	if ((flags & D_PATH_DISCONNECT) && *name == '/') {
+		/* Make sure we won't return a pathname starting with '/' */
+		name++;
+		namelen--;
+	}
+	if (prepend(&buffer, &buflen, name, namelen))
 		goto Elong;
 	root->mnt = vfsmnt;
 	root->dentry = dentry;
 	goto out;
 
 Elong:
-	retval = ERR_PTR(-ENAMETOOLONG);
+	buffer = ERR_PTR(-ENAMETOOLONG);
 	goto out;
 }
 
@@ -2011,10 +2037,8 @@ char *d_path(const struct path *path, char *buf, int buflen)
 	root = current->fs->root;
 	path_get(&root);
 	read_unlock(&current->fs->lock);
-	spin_lock(&dcache_lock);
 	tmp = root;
-	res = __d_path(path, &tmp, buf, buflen);
-	spin_unlock(&dcache_lock);
+	res = __d_path(path, &tmp, buf, buflen, 0);
 	path_put(&root);
 	return res;
 }
@@ -2097,9 +2121,9 @@ Elong:
  */
 asmlinkage long sys_getcwd(char __user *buf, unsigned long size)
 {
-	int error;
-	struct path pwd, root;
-	char *page = (char *) __get_free_page(GFP_USER);
+	int error, len;
+	struct path pwd, root, tmp;
+	char *page = (char *) __get_free_page(GFP_USER), *cwd;
 
 	if (!page)
 		return -ENOMEM;
@@ -2111,30 +2135,20 @@ asmlinkage long sys_getcwd(char __user *buf, unsigned long size)
 	path_get(&root);
 	read_unlock(&current->fs->lock);
 
-	error = -ENOENT;
-	/* Has the current directory has been unlinked? */
-	spin_lock(&dcache_lock);
-	if (IS_ROOT(pwd.dentry) || !d_unhashed(pwd.dentry)) {
-		unsigned long len;
-		struct path tmp = root;
-		char * cwd;
-
-		cwd = __d_path(&pwd, &tmp, page, PAGE_SIZE);
-		spin_unlock(&dcache_lock);
-
+	tmp = root;
+	cwd = __d_path(&pwd, &tmp, page, PAGE_SIZE, D_PATH_FAIL_DELETED);
+	if (IS_ERR(cwd)) {
 		error = PTR_ERR(cwd);
-		if (IS_ERR(cwd))
-			goto out;
+		goto out;
+	}
 
-		error = -ERANGE;
-		len = PAGE_SIZE + page - cwd;
-		if (len <= size) {
-			error = len;
-			if (copy_to_user(buf, cwd, len))
-				error = -EFAULT;
-		}
-	} else
-		spin_unlock(&dcache_lock);
+	error = -ERANGE;
+	len = PAGE_SIZE + page - cwd;
+	if (len <= size) {
+		error = len;
+		if (copy_to_user(buf, cwd, len))
+			error = -EFAULT;
+	}
 
 out:
 	path_put(&pwd);

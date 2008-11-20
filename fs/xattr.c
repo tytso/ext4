@@ -67,8 +67,8 @@ xattr_permission(struct inode *inode, const char *name, int mask)
 }
 
 int
-vfs_setxattr(struct dentry *dentry, const char *name, const void *value,
-		size_t size, int flags)
+vfs_setxattr(struct dentry *dentry, struct vfsmount *mnt, const char *name,
+	     const void *value, size_t size, int flags, struct file *file)
 {
 	struct inode *inode = dentry->d_inode;
 	int error;
@@ -78,7 +78,7 @@ vfs_setxattr(struct dentry *dentry, const char *name, const void *value,
 		return error;
 
 	mutex_lock(&inode->i_mutex);
-	error = security_inode_setxattr(dentry, name, value, size, flags);
+	error = security_inode_setxattr(dentry, mnt, name, value, size, flags,						file);
 	if (error)
 		goto out;
 	error = -EOPNOTSUPP;
@@ -86,7 +86,7 @@ vfs_setxattr(struct dentry *dentry, const char *name, const void *value,
 		error = inode->i_op->setxattr(dentry, name, value, size, flags);
 		if (!error) {
 			fsnotify_xattr(dentry);
-			security_inode_post_setxattr(dentry, name, value,
+			security_inode_post_setxattr(dentry, mnt, name, value,
 						     size, flags);
 		}
 	} else if (!strncmp(name, XATTR_SECURITY_PREFIX,
@@ -131,7 +131,8 @@ out_noalloc:
 EXPORT_SYMBOL_GPL(xattr_getsecurity);
 
 ssize_t
-vfs_getxattr(struct dentry *dentry, const char *name, void *value, size_t size)
+vfs_getxattr(struct dentry *dentry, struct vfsmount *mnt, const char *name,
+	     void *value, size_t size, struct file *file)
 {
 	struct inode *inode = dentry->d_inode;
 	int error;
@@ -140,7 +141,7 @@ vfs_getxattr(struct dentry *dentry, const char *name, void *value, size_t size)
 	if (error)
 		return error;
 
-	error = security_inode_getxattr(dentry, name);
+	error = security_inode_getxattr(dentry, mnt, name, file);
 	if (error)
 		return error;
 
@@ -167,18 +168,20 @@ nolsm:
 EXPORT_SYMBOL_GPL(vfs_getxattr);
 
 ssize_t
-vfs_listxattr(struct dentry *d, char *list, size_t size)
+vfs_listxattr(struct dentry *dentry, struct vfsmount *mnt, char *list,
+	      size_t size, struct file *file)
 {
+	struct inode *inode = dentry->d_inode;
 	ssize_t error;
 
-	error = security_inode_listxattr(d);
+	error = security_inode_listxattr(dentry, mnt, file);
 	if (error)
 		return error;
 	error = -EOPNOTSUPP;
-	if (d->d_inode->i_op && d->d_inode->i_op->listxattr) {
-		error = d->d_inode->i_op->listxattr(d, list, size);
-	} else {
-		error = security_inode_listsecurity(d->d_inode, list, size);
+	if (inode->i_op && inode->i_op->listxattr)
+		error = inode->i_op->listxattr(dentry, list, size);
+	else {
+		error = security_inode_listsecurity(inode, list, size);
 		if (size && error > size)
 			error = -ERANGE;
 	}
@@ -187,7 +190,8 @@ vfs_listxattr(struct dentry *d, char *list, size_t size)
 EXPORT_SYMBOL_GPL(vfs_listxattr);
 
 int
-vfs_removexattr(struct dentry *dentry, const char *name)
+vfs_removexattr(struct dentry *dentry, struct vfsmount *mnt, const char *name,
+		struct file *file)
 {
 	struct inode *inode = dentry->d_inode;
 	int error;
@@ -199,7 +203,7 @@ vfs_removexattr(struct dentry *dentry, const char *name)
 	if (error)
 		return error;
 
-	error = security_inode_removexattr(dentry, name);
+	error = security_inode_removexattr(dentry, mnt, name, file);
 	if (error)
 		return error;
 
@@ -218,8 +222,8 @@ EXPORT_SYMBOL_GPL(vfs_removexattr);
  * Extended attribute SET operations
  */
 static long
-setxattr(struct dentry *d, const char __user *name, const void __user *value,
-	 size_t size, int flags)
+setxattr(struct dentry *dentry, struct vfsmount *mnt, const char __user *name,
+	 const void __user *value, size_t size, int flags, struct file *file)
 {
 	int error;
 	void *kvalue = NULL;
@@ -246,7 +250,7 @@ setxattr(struct dentry *d, const char __user *name, const void __user *value,
 		}
 	}
 
-	error = vfs_setxattr(d, kname, kvalue, size, flags);
+	error = vfs_setxattr(dentry, mnt, kname, kvalue, size, flags, file);
 	kfree(kvalue);
 	return error;
 }
@@ -263,7 +267,8 @@ sys_setxattr(const char __user *pathname, const char __user *name,
 		return error;
 	error = mnt_want_write(path.mnt);
 	if (!error) {
-		error = setxattr(path.dentry, name, value, size, flags);
+		error = setxattr(path.dentry, path.mnt, name, value, size,
+				 flags, NULL);
 		mnt_drop_write(path.mnt);
 	}
 	path_put(&path);
@@ -282,7 +287,8 @@ sys_lsetxattr(const char __user *pathname, const char __user *name,
 		return error;
 	error = mnt_want_write(path.mnt);
 	if (!error) {
-		error = setxattr(path.dentry, name, value, size, flags);
+		error = setxattr(path.dentry, path.mnt, name, value, size,
+				 flags, NULL);
 		mnt_drop_write(path.mnt);
 	}
 	path_put(&path);
@@ -304,7 +310,8 @@ sys_fsetxattr(int fd, const char __user *name, const void __user *value,
 	audit_inode(NULL, dentry);
 	error = mnt_want_write(f->f_path.mnt);
 	if (!error) {
-		error = setxattr(dentry, name, value, size, flags);
+		error = setxattr(dentry, f->f_vfsmnt, name, value, size, flags,
+				 f);
 		mnt_drop_write(f->f_path.mnt);
 	}
 	fput(f);
@@ -315,8 +322,8 @@ sys_fsetxattr(int fd, const char __user *name, const void __user *value,
  * Extended attribute GET operations
  */
 static ssize_t
-getxattr(struct dentry *d, const char __user *name, void __user *value,
-	 size_t size)
+getxattr(struct dentry *dentry, struct vfsmount *mnt, const char __user *name,
+	 void __user *value, size_t size, struct file *file)
 {
 	ssize_t error;
 	void *kvalue = NULL;
@@ -336,7 +343,7 @@ getxattr(struct dentry *d, const char __user *name, void __user *value,
 			return -ENOMEM;
 	}
 
-	error = vfs_getxattr(d, kname, kvalue, size);
+	error = vfs_getxattr(dentry, mnt, kname, kvalue, size, file);
 	if (error > 0) {
 		if (size && copy_to_user(value, kvalue, error))
 			error = -EFAULT;
@@ -359,7 +366,7 @@ sys_getxattr(const char __user *pathname, const char __user *name,
 	error = user_path(pathname, &path);
 	if (error)
 		return error;
-	error = getxattr(path.dentry, name, value, size);
+	error = getxattr(path.dentry, path.mnt, name, value, size, NULL);
 	path_put(&path);
 	return error;
 }
@@ -374,7 +381,7 @@ sys_lgetxattr(const char __user *pathname, const char __user *name, void __user 
 	error = user_lpath(pathname, &path);
 	if (error)
 		return error;
-	error = getxattr(path.dentry, name, value, size);
+	error = getxattr(path.dentry, path.mnt, name, value, size, NULL);
 	path_put(&path);
 	return error;
 }
@@ -389,7 +396,7 @@ sys_fgetxattr(int fd, const char __user *name, void __user *value, size_t size)
 	if (!f)
 		return error;
 	audit_inode(NULL, f->f_path.dentry);
-	error = getxattr(f->f_path.dentry, name, value, size);
+	error = getxattr(f->f_path.dentry, f->f_path.mnt, name, value, size, f);
 	fput(f);
 	return error;
 }
@@ -398,7 +405,8 @@ sys_fgetxattr(int fd, const char __user *name, void __user *value, size_t size)
  * Extended attribute LIST operations
  */
 static ssize_t
-listxattr(struct dentry *d, char __user *list, size_t size)
+listxattr(struct dentry *dentry, struct vfsmount *mnt, char __user *list,
+	  size_t size, struct file *file)
 {
 	ssize_t error;
 	char *klist = NULL;
@@ -411,7 +419,7 @@ listxattr(struct dentry *d, char __user *list, size_t size)
 			return -ENOMEM;
 	}
 
-	error = vfs_listxattr(d, klist, size);
+	error = vfs_listxattr(dentry, mnt, klist, size, file);
 	if (error > 0) {
 		if (size && copy_to_user(list, klist, error))
 			error = -EFAULT;
@@ -433,7 +441,7 @@ sys_listxattr(const char __user *pathname, char __user *list, size_t size)
 	error = user_path(pathname, &path);
 	if (error)
 		return error;
-	error = listxattr(path.dentry, list, size);
+	error = listxattr(path.dentry, path.mnt, list, size, NULL);
 	path_put(&path);
 	return error;
 }
@@ -447,7 +455,7 @@ sys_llistxattr(const char __user *pathname, char __user *list, size_t size)
 	error = user_lpath(pathname, &path);
 	if (error)
 		return error;
-	error = listxattr(path.dentry, list, size);
+	error = listxattr(path.dentry, path.mnt, list, size, NULL);
 	path_put(&path);
 	return error;
 }
@@ -462,7 +470,7 @@ sys_flistxattr(int fd, char __user *list, size_t size)
 	if (!f)
 		return error;
 	audit_inode(NULL, f->f_path.dentry);
-	error = listxattr(f->f_path.dentry, list, size);
+	error = listxattr(f->f_path.dentry, f->f_path.mnt, list, size, f);
 	fput(f);
 	return error;
 }
@@ -471,7 +479,8 @@ sys_flistxattr(int fd, char __user *list, size_t size)
  * Extended attribute REMOVE operations
  */
 static long
-removexattr(struct dentry *d, const char __user *name)
+removexattr(struct dentry *dentry, struct vfsmount *mnt,
+	    const char __user *name, struct file *file)
 {
 	int error;
 	char kname[XATTR_NAME_MAX + 1];
@@ -482,7 +491,7 @@ removexattr(struct dentry *d, const char __user *name)
 	if (error < 0)
 		return error;
 
-	return vfs_removexattr(d, kname);
+	return vfs_removexattr(dentry, mnt, kname, file);
 }
 
 asmlinkage long
@@ -496,7 +505,7 @@ sys_removexattr(const char __user *pathname, const char __user *name)
 		return error;
 	error = mnt_want_write(path.mnt);
 	if (!error) {
-		error = removexattr(path.dentry, name);
+		error = removexattr(path.dentry, path.mnt, name, NULL);
 		mnt_drop_write(path.mnt);
 	}
 	path_put(&path);
@@ -514,7 +523,7 @@ sys_lremovexattr(const char __user *pathname, const char __user *name)
 		return error;
 	error = mnt_want_write(path.mnt);
 	if (!error) {
-		error = removexattr(path.dentry, name);
+		error = removexattr(path.dentry, path.mnt, name, NULL);
 		mnt_drop_write(path.mnt);
 	}
 	path_put(&path);
@@ -535,7 +544,7 @@ sys_fremovexattr(int fd, const char __user *name)
 	audit_inode(NULL, dentry);
 	error = mnt_want_write(f->f_path.mnt);
 	if (!error) {
-		error = removexattr(dentry, name);
+		error = removexattr(dentry, f->f_path.mnt, name, f);
 		mnt_drop_write(f->f_path.mnt);
 	}
 	fput(f);
