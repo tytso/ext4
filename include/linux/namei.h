@@ -84,6 +84,8 @@ extern int follow_up(struct vfsmount **, struct dentry **);
 extern struct dentry *lock_rename(struct dentry *, struct dentry *);
 extern void unlock_rename(struct dentry *, struct dentry *);
 
+struct dentry * __lookup_hash(struct qstr *name, struct dentry * base, struct nameidata *nd);
+
 static inline void nd_set_link(struct nameidata *nd, char *path)
 {
 	nd->saved_names[nd->depth] = path;
