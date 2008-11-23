@@ -2139,7 +2139,7 @@ asmlinkage long sys_getcwd(char __user *buf, unsigned long size)
 	cwd = __d_path(&pwd, &tmp, page, PAGE_SIZE, D_PATH_FAIL_DELETED);
 	if (IS_ERR(cwd)) {
 		error = PTR_ERR(cwd);
-		goto out;
+ 		goto out;
 	}
 
 	error = -ERANGE;

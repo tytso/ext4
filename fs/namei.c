@@ -226,7 +226,7 @@ int generic_permission(struct inode *inode, int mask,
 	return -EACCES;
 }
 
-int inode_permission(struct inode *inode, int mask)
+static int __inode_permission(struct inode *inode, int mask)
 {
 	int retval;
 
@@ -256,11 +256,25 @@ int inode_permission(struct inode *inode, int mask)
 	if (retval)
 		return retval;
 
-	retval = devcgroup_inode_permission(inode, mask);
+	return devcgroup_inode_permission(inode, mask);
+}
+
+int inode_permission(struct inode *inode, int mask)
+{
+	int retval = __inode_permission(inode, mask);
 	if (retval)
 		return retval;
 
 	return security_inode_permission(inode,
+			mask & (MAY_READ|MAY_WRITE|MAY_EXEC|MAY_APPEND));
+}
+
+int path_permission(struct path *path, int mask)
+{
+	int retval = __inode_permission(path->dentry->d_inode, mask);
+	if (retval)
+		return retval;
+	return security_path_permission(path,
 			mask & (MAY_READ|MAY_WRITE|MAY_EXEC|MAY_APPEND));
 }
 
@@ -276,7 +290,7 @@ int inode_permission(struct inode *inode, int mask)
  */
 int vfs_permission(struct nameidata *nd, int mask)
 {
-	return inode_permission(nd->path.dentry->d_inode, mask);
+	return path_permission(&nd->path, mask);
 }
 
 /**
@@ -293,7 +307,7 @@ int vfs_permission(struct nameidata *nd, int mask)
  */
 int file_permission(struct file *file, int mask)
 {
-	return inode_permission(file->f_path.dentry->d_inode, mask);
+	return path_permission(&file->f_path, mask);
 }
 
 /*
@@ -434,8 +448,9 @@ static struct dentry * cached_lookup(struct dentry * parent, struct qstr * name,
  * short-cut DAC fails, then call permission() to do more
  * complete permission check.
  */
-static int exec_permission_lite(struct inode *inode)
+static int exec_permission_lite(struct path *path)
 {
+	struct inode *inode = path->dentry->d_inode;
 	umode_t	mode = inode->i_mode;
 
 	if (inode->i_op && inode->i_op->permission)
@@ -460,7 +475,7 @@ static int exec_permission_lite(struct inode *inode)
 
 	return -EACCES;
 ok:
-	return security_inode_permission(inode, MAY_EXEC);
+	return security_path_permission(path, MAY_EXEC);
 }
 
 /*
@@ -857,7 +872,7 @@ static int __link_path_walk(const char *name, struct nameidata *nd)
 		unsigned int c;
 
 		nd->flags |= LOOKUP_CONTINUE;
-		err = exec_permission_lite(inode);
+		err = exec_permission_lite(&nd->path);
 		if (err == -EAGAIN)
 			err = vfs_permission(nd, MAY_EXEC);
  		if (err)
@@ -1213,7 +1228,7 @@ static struct dentry *lookup_hash(struct nameidata *nd)
 {
 	int err;
 
-	err = inode_permission(nd->path.dentry->d_inode, MAY_EXEC);
+	err = path_permission(&nd->path, MAY_EXEC);
 	if (err)
 		return ERR_PTR(err);
 	return __lookup_hash(&nd->last, nd->path.dentry, nd);
@@ -2864,6 +2879,7 @@ EXPORT_SYMBOL(path_lookup);
 EXPORT_SYMBOL(kern_path);
 EXPORT_SYMBOL(vfs_path_lookup);
 EXPORT_SYMBOL(inode_permission);
+EXPORT_SYMBOL(path_permission);
 EXPORT_SYMBOL(vfs_permission);
 EXPORT_SYMBOL(file_permission);
 EXPORT_SYMBOL(unlock_rename);

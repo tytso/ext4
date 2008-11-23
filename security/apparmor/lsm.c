@@ -23,17 +23,8 @@
 #include "apparmor.h"
 #include "inline.h"
 
-extern struct security_operations *security_ops;
-
 /* Flag indicating whether initialization completed */
 int apparmor_initialized = 0;
-
-/* point to the apparmor module */
-struct module *aa_module = NULL;
-
-/* secondary ops if apparmor is stacked */
-static struct security_operations *aa_secondary_ops = NULL;
-static DEFINE_MUTEX(aa_secondary_lock);
 
 static int param_set_aabool(const char *val, struct kernel_param *kp);
 static int param_get_aabool(char *buffer, struct kernel_param *kp);
@@ -200,7 +191,7 @@ static int apparmor_ptrace(struct task_struct *tracer,
 
 			error = aa_may_ptrace(cxt, tracee_cxt ?
 						   tracee_cxt->profile : NULL);
-			if (PROFILE_COMPLAIN(cxt->profile)) {
+			if (error && PROFILE_COMPLAIN(cxt->profile)) {
 				struct aa_audit sa;
 				memset(&sa, 0, sizeof(sa));
 				sa.operation = "ptrace";
@@ -221,6 +212,7 @@ static int apparmor_ptrace_may_access(struct task_struct *child,
 {
 	return apparmor_ptrace(current, child);
 }
+
 
 static int apparmor_ptrace_traceme(struct task_struct *parent)
 {
@@ -471,21 +463,7 @@ out:
 
 static int apparmor_inode_permission(struct inode *inode, int mask)
 {
-	int check = 0, error = 0;
-
-	mask = aa_mask_permissions(mask);
-	if (S_ISDIR(inode->i_mode)) {
-		check |= AA_CHECK_DIR;
-		/* allow traverse accesses to directories */
-		mask &= ~MAY_EXEC;
-	}
-	error = aa_permission("inode_permission", inode, NULL,
-			      NULL, mask, check); /* XXX */
-
-	if (!error)
-		error = aa_secondary_ops->inode_permission(inode, mask);
-
-	return error;
+	return 0;
 }
 
 static int apparmor_inode_setattr(struct dentry *dentry, struct vfsmount *mnt,
@@ -677,6 +655,29 @@ static int apparmor_file_mprotect(struct vm_area_struct *vma,
 {
 	return aa_mmap(vma->vm_file, "file_mprotect", prot,
 		       !(vma->vm_flags & VM_SHARED) ? MAP_PRIVATE : 0);
+}
+
+static int apparmor_path_permission(struct path *path, int mask)
+{
+	struct inode *inode;
+	int check = 0;
+
+	if (!path)
+		return 0;
+
+	inode = path->dentry->d_inode;
+
+	mask = aa_mask_permissions(mask);
+	if (S_ISDIR(inode->i_mode)) {
+		check |= AA_CHECK_DIR;
+		/* allow traverse accesses to directories */
+		mask &= ~MAY_EXEC;
+		if (!mask)
+			return 0;
+	}
+
+	return aa_permission("inode_permission", inode, path->dentry,
+			     path->mnt, mask, check);
 }
 
 static int apparmor_task_alloc_security(struct task_struct *task)
@@ -947,6 +948,8 @@ struct security_operations apparmor_ops = {
 	.file_mprotect =		apparmor_file_mprotect,
 	.file_lock =			apparmor_file_lock,
 
+	.path_permission =		apparmor_path_permission,
+
 	.task_alloc_security =		apparmor_task_alloc_security,
 	.task_free_security =		apparmor_task_free_security,
 	.task_post_setuid =		cap_task_post_setuid,
@@ -971,14 +974,13 @@ struct security_operations apparmor_ops = {
 	.socket_shutdown =		apparmor_socket_shutdown,
 };
 
-void info_message(const char *str, const char *name)
+void info_message(const char *str)
 {
 	struct aa_audit sa;
 	memset(&sa, 0, sizeof(sa));
 	sa.gfp_mask = GFP_KERNEL;
 	sa.info = str;
-	sa.name = name;
-	printk(KERN_INFO "AppArmor: %s %s\n", str, name);
+	printk(KERN_INFO "AppArmor: %s\n", str);
 	if (audit_enabled)
 		aa_audit_message(NULL, &sa, AUDIT_APPARMOR_STATUS);
 }
@@ -988,7 +990,7 @@ static int __init apparmor_init(void)
 	int error;
 
 	if (!apparmor_enabled) {
-		info_message("AppArmor disabled by boottime parameter", "");
+		info_message("AppArmor disabled by boottime parameter\n");
 		return 0;
 	}
 
@@ -1002,10 +1004,7 @@ static int __init apparmor_init(void)
 		goto alloc_out;
 	}
 
-	if (!(aa_secondary_ops = security_ops))
-		panic("AppArmor: No initial security operations\n");
-
-	if ((error = register_security(&apparmor_ops))) {
+ 	if ((error = register_security(&apparmor_ops))) {
 		AA_ERROR("Unable to register AppArmor\n");
 		goto register_security_out;
 	}
@@ -1013,10 +1012,9 @@ static int __init apparmor_init(void)
 	/* Report that AppArmor successfully initialized */
 	apparmor_initialized = 1;
 	if (apparmor_complain)
-		info_message("AppArmor initialized: complainmode enabled",
-			     NULL);
+		info_message("AppArmor initialized: complainmode enabled");
 	else
-		info_message("AppArmor initialized", NULL);
+		info_message("AppArmor initialized");
 
 	return error;
 
@@ -1054,7 +1052,7 @@ void apparmor_disable(void)
 
 	apparmor_initialized = 0;
 
-	info_message("AppArmor protection removed", NULL);
+	info_message("AppArmor protection removed");
 }
 
 MODULE_DESCRIPTION("AppArmor process confinement");

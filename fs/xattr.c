@@ -267,8 +267,7 @@ sys_setxattr(const char __user *pathname, const char __user *name,
 		return error;
 	error = mnt_want_write(path.mnt);
 	if (!error) {
-		error = setxattr(path.dentry, path.mnt, name, value, size,
-				 flags, NULL);
+		error = setxattr(path.dentry, path.mnt, name, value, size, flags, NULL);
 		mnt_drop_write(path.mnt);
 	}
 	path_put(&path);
@@ -287,8 +286,7 @@ sys_lsetxattr(const char __user *pathname, const char __user *name,
 		return error;
 	error = mnt_want_write(path.mnt);
 	if (!error) {
-		error = setxattr(path.dentry, path.mnt, name, value, size,
-				 flags, NULL);
+		error = setxattr(path.dentry, path.mnt, name, value, size, flags, NULL);
 		mnt_drop_write(path.mnt);
 	}
 	path_put(&path);

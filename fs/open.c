@@ -250,7 +250,7 @@ static long do_sys_truncate(const char __user *pathname, loff_t length)
 	if (error)
 		goto dput_and_out;
 
-	error = inode_permission(inode, MAY_WRITE);
+	error = path_permission(&path, MAY_WRITE);
 	if (error)
 		goto mnt_drop_write_and_out;
 
@@ -474,7 +474,7 @@ asmlinkage long sys_faccessat(int dfd, const char __user *filename, int mode)
 			goto out_path_release;
 	}
 
-	res = inode_permission(inode, mode | MAY_ACCESS);
+	res = path_permission(&path, mode | MAY_ACCESS);
 	/* SuS v2 requires we report a read only fs too */
 	if (res || !(mode & S_IWOTH) || special_file(inode->i_mode))
 		goto out_path_release;
@@ -517,7 +517,7 @@ asmlinkage long sys_chdir(const char __user * filename)
 	if (error)
 		goto out;
 
-	error = inode_permission(path.dentry->d_inode, MAY_EXEC | MAY_ACCESS);
+	error = path_permission(&path, MAY_EXEC | MAY_ACCESS);
 	if (error)
 		goto dput_and_out;
 
@@ -532,6 +532,7 @@ out:
 asmlinkage long sys_fchdir(unsigned int fd)
 {
 	struct file *file;
+	struct inode *inode;
 	int error;
 
 	error = -EBADF;
@@ -539,11 +540,13 @@ asmlinkage long sys_fchdir(unsigned int fd)
 	if (!file)
 		goto out;
 
+	inode = file->f_path.dentry->d_inode;
+
 	error = -ENOTDIR;
-	if (!S_ISDIR(file->f_path.dentry->d_inode->i_mode))
+	if (!S_ISDIR(inode->i_mode))
 		goto out_putf;
 
-	error = file_permission(file, MAY_EXEC);
+	error = path_permission(&file->f_path, MAY_EXEC | MAY_ACCESS);
 	if (!error)
 		set_fs_pwd(current->fs, &file->f_path);
 out_putf:
@@ -561,7 +564,7 @@ asmlinkage long sys_chroot(const char __user * filename)
 	if (error)
 		goto out;
 
-	error = inode_permission(path.dentry->d_inode, MAY_EXEC | MAY_ACCESS);
+	error = path_permission(&path, MAY_EXEC | MAY_ACCESS);
 	if (error)
 		goto dput_and_out;
 

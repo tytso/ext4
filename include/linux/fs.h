@@ -1231,6 +1231,11 @@ extern void dentry_unhash(struct dentry *dentry);
 extern int file_permission(struct file *, int);
 
 /*
+ * VFS path helper functions.
+ */
+extern int path_permission(struct path *, int);
+
+/*
  * VFS FS_IOC_FIEMAP helper definitions.
  */
 struct fiemap_extent_info {

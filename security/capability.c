@@ -161,8 +161,8 @@ static int cap_inode_create(struct inode *inode, struct dentry *dentry,
 }
 
 static int cap_inode_link(struct dentry *old_dentry, struct vfsmount *old_mnt,
-			  struct inode *inode, struct dentry *new_dentry,
-			  struct vfsmount *new_mnt)
+			  struct inode *inode,
+			  struct dentry *new_dentry, struct vfsmount *new_mnt)
 {
 	return 0;
 }
@@ -236,19 +236,19 @@ static void cap_inode_delete(struct inode *ino)
 }
 
 static void cap_inode_post_setxattr(struct dentry *dentry, struct vfsmount *mnt,
-				    const char *name, const void *value,
-				    size_t size, int flags)
+				    const char *name,
+				    const void *value, size_t size, int flags)
 {
 }
 
 static int cap_inode_getxattr(struct dentry *dentry, struct vfsmount *mnt,
-			      const char *name, struct file *file)
+			      const char *name, struct file *f)
 {
 	return 0;
 }
 
 static int cap_inode_listxattr(struct dentry *dentry, struct vfsmount *mnt,
-			       struct file *file)
+			       struct file *f)
 {
 	return 0;
 }
@@ -341,6 +341,11 @@ static int cap_file_receive(struct file *file)
 static int cap_dentry_open(struct file *file)
 {
 	return 0;
+}
+
+static int cap_path_permission(struct path *path, int mask)
+{
+	return security_inode_permission(path->dentry->d_inode, mask);
 }
 
 static int cap_task_create(unsigned long clone_flags)
@@ -897,6 +902,7 @@ void security_fixup_ops(struct security_operations *ops)
 	set_to_cap_if_null(ops, file_send_sigiotask);
 	set_to_cap_if_null(ops, file_receive);
 	set_to_cap_if_null(ops, dentry_open);
+	set_to_cap_if_null(ops, path_permission);
 	set_to_cap_if_null(ops, task_create);
 	set_to_cap_if_null(ops, task_alloc_security);
 	set_to_cap_if_null(ops, task_free_security);

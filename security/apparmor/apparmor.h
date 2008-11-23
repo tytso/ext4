@@ -354,7 +354,7 @@ extern void aa_set_rlimits(struct task_struct *task, struct aa_profile *profile)
 
 /* lsm.c */
 extern int apparmor_initialized;
-extern void info_message(const char *str, const char *name);
+extern void info_message(const char *str);
 extern void apparmor_disable(void);
 
 /* list.c */

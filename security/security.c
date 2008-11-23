@@ -416,7 +416,6 @@ int security_inode_rmdir(struct inode *dir, struct dentry *dentry,
 		return 0;
 	return security_ops->inode_rmdir(dir, dentry, mnt);
 }
-EXPORT_SYMBOL(security_inode_permission);
 
 int security_inode_mknod(struct inode *dir, struct dentry *dentry,
 			 struct vfsmount *mnt, int mode, dev_t dev)
@@ -425,6 +424,7 @@ int security_inode_mknod(struct inode *dir, struct dentry *dentry,
 		return 0;
 	return security_ops->inode_mknod(dir, dentry, mnt, mode, dev);
 }
+EXPORT_SYMBOL_GPL(security_inode_permission);
 
 int security_inode_rename(struct inode *old_dir, struct dentry *old_dentry,
 			  struct vfsmount *old_mnt, struct inode *new_dir,
@@ -623,6 +623,15 @@ int security_file_receive(struct file *file)
 int security_dentry_open(struct file *file)
 {
 	return security_ops->dentry_open(file);
+}
+
+int security_path_permission(struct path *path, int mask)
+{
+	struct inode *inode = path->dentry->d_inode;
+	if (unlikely(IS_PRIVATE(inode)))
+		return 0;
+
+	return security_ops->path_permission(path, mask);
 }
 
 int security_task_create(unsigned long clone_flags)

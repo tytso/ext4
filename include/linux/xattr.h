@@ -16,6 +16,8 @@
 #ifdef  __KERNEL__
 
 #include <linux/types.h>
+#include <linux/mount.h>
+#include <linux/fs.h>
 
 /* Namespaces */
 #define XATTR_OS2_PREFIX "os2."
@@ -35,8 +37,6 @@
 
 struct inode;
 struct dentry;
-struct file;
-struct vfsmount;
 
 struct xattr_handler {
 	char *prefix;

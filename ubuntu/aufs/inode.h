@@ -87,6 +87,7 @@ int au_test_h_perm_sio(struct inode *h_inode, int mask, int dlgt);
 
 /* i_op.c */
 extern struct inode_operations aufs_iop, aufs_symlink_iop, aufs_dir_iop;
+int aufs_fsetattr(struct file *file, struct iattr *ia);
 
 /* au_wr_dir flags */
 #define AuWrDir_ADD_ENTRY	1

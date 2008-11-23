@@ -592,6 +592,20 @@ static inline void security_free_mnt_opts(struct security_mnt_opts *opts)
  *	file_permission, and recheck access if anything has changed
  *	since inode_permission.
  *
+ * Security hook for path
+ *
+ * @path_permission:
+ *	Check permission before accessing a path.  This hook is called by the
+ *	existing Linux permission function, so a security module can use it to
+ *	provide additional checking for existing Linux permission checks.
+ *	Notice that this hook is called when a file is opened (as well as many
+ *	other operations), whereas the file_security_ops permission hook is
+ *	called when the actual read/write operations are performed. This
+ *	hook is optional and if absent, inode_permission will be substituted.
+ *	@path contains the path structure to check.
+ *	@mask contains the permission mask.
+ *	Return 0 if permission is granted.
+
  * Security hooks for task operations.
  *
  * @task_create:
@@ -1390,8 +1404,8 @@ struct security_operations {
 	int (*inode_readlink) (struct dentry *dentry, struct vfsmount *mnt);
 	int (*inode_follow_link) (struct dentry *dentry, struct nameidata *nd);
 	int (*inode_permission) (struct inode *inode, int mask);
-	int (*inode_setattr) (struct dentry *dentry, struct vfsmount *mnt,
-			      struct iattr *attr);
+	int (*inode_setattr)	(struct dentry *dentry, struct vfsmount *,
+				 struct iattr *attr);
 	int (*inode_getattr) (struct vfsmount *mnt, struct dentry *dentry);
 	void (*inode_delete) (struct inode *inode);
 	int (*inode_setxattr) (struct dentry *dentry, struct vfsmount *mnt,
@@ -1434,6 +1448,7 @@ struct security_operations {
 				    struct fown_struct *fown, int sig);
 	int (*file_receive) (struct file *file);
 	int (*dentry_open) (struct file *file);
+	int (*path_permission) (struct path *path, int mask);
 
 	int (*task_create) (unsigned long clone_flags);
 	int (*task_alloc_security) (struct task_struct *p);
@@ -1704,6 +1719,7 @@ int security_file_send_sigiotask(struct task_struct *tsk,
 				 struct fown_struct *fown, int sig);
 int security_file_receive(struct file *file);
 int security_dentry_open(struct file *file);
+int security_path_permission(struct path *path, int mask);
 int security_task_create(unsigned long clone_flags);
 int security_task_alloc(struct task_struct *p);
 void security_task_free(struct task_struct *p);
@@ -2242,6 +2258,11 @@ static inline int security_file_receive(struct file *file)
 }
 
 static inline int security_dentry_open(struct file *file)
+{
+	return 0;
+}
+
+static inline int security_path_permission(struct path *path, int mask)
 {
 	return 0;
 }

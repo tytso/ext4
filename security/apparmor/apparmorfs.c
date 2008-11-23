@@ -13,8 +13,8 @@
 #include <linux/vmalloc.h>
 #include <linux/module.h>
 #include <linux/seq_file.h>
-#include <linux/namei.h>
 #include <asm/uaccess.h>
+#include <linux/namei.h>
 
 #include "apparmor.h"
 #include "inline.h"
@@ -267,7 +267,7 @@ int create_apparmorfs(void)
 		goto error;
 
 	/* Report that AppArmor fs is enabled */
-	info_message("AppArmor Filesystem Enabled", "");
+	info_message("AppArmor Filesystem Enabled");
 	return 0;
 
 error:
