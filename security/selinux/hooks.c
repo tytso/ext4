@@ -2745,7 +2745,7 @@ static int selinux_inode_setxattr(struct dentry *dentry, struct vfsmount *mnt,
 
 static void selinux_inode_post_setxattr(struct dentry *dentry,
 					struct vfsmount *mnt, const char *name,
-                                        const void *value, size_t size,
+					const void *value, size_t size,
 					int flags)
 {
 	struct inode *inode = dentry->d_inode;

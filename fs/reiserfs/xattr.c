@@ -790,7 +790,7 @@ reiserfs_chown_xattrs_filler(void *buf, const char *name, int namelen,
 	}
 
 	if (!S_ISDIR(xafile->d_inode->i_mode))
-		err = notify_change(xafile, NULL, attrs);
+	    err = notify_change(xafile, NULL, attrs);
 	dput(xafile);
 
 	return err;

@@ -771,13 +771,13 @@ static int au_lock_and_icpup(struct dentry *dentry, loff_t sz,
 	return err;
 }
 
-static int aufs_setattr(struct dentry *dentry, struct iattr *ia)
+static int aufs_do_setattr(struct dentry *dentry, struct iattr *ia,
+			   struct file *file)
 {
 	int err;
 	struct inode *inode;
 	struct super_block *sb;
 	__u32 events;
-	struct file *file;
 	loff_t sz;
 	struct au_icpup_args *a;
 
@@ -795,12 +795,8 @@ static int aufs_setattr(struct dentry *dentry, struct iattr *ia)
 	si_read_lock(sb, AuLock_FLUSH);
 	vfsub_args_init(&a->vargs, a->ign, au_test_dlgt(au_mntflags(sb)), 0);
 
-	if (ia->ia_valid & ATTR_FILE) {
-		/* currently ftruncate(2) only */
-		file = ia->ia_file;
+        if (file)
 		fi_write_lock(file);
-		ia->ia_file = au_h_fptr(file, au_fbstart(file));
-	}
 
 	sz = -1;
 	if ((ia->ia_valid & ATTR_SIZE)
@@ -844,16 +840,23 @@ static int aufs_setattr(struct dentry *dentry, struct iattr *ia)
 	au_unpin(&a->pin);
 	di_write_unlock(dentry);
  out_si:
-	if (file) {
+	if (file)
 		fi_write_unlock(file);
-		ia->ia_file = file;
-		ia->ia_valid |= ATTR_FILE;
-	}
 	si_read_unlock(sb);
 	kfree(a);
  out:
 	AuTraceErr(err);
 	return err;
+}
+
+static int aufs_setattr(struct dentry *dentry, struct iattr *ia)
+{
+      return aufs_do_setattr(dentry, ia, NULL);
+}
+
+int aufs_fsetattr(struct file *file, struct iattr *ia)
+{
+      return aufs_do_setattr(file->f_dentry, ia, file);
 }
 
 /* ---------------------------------------------------------------------- */

@@ -508,6 +508,8 @@ int vfsub_sio_notify_change(struct au_hinode *hdir, struct dentry *dentry,
 
 /* ---------------------------------------------------------------------- */
 
+int vfsub_fnotify_change(struct dentry *dentry, struct iattr *ia,
+			struct vfsub_args *vargs, struct file *file);
 int vfsub_notify_change(struct dentry *dentry, struct iattr *ia,
 			struct vfsub_args *vargs);
 int vfsub_unlink(struct inode *dir, struct dentry *dentry,

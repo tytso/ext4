@@ -454,6 +454,7 @@ static int smack_inode_link(struct dentry *old_dentry, struct vfsmount *old_mnt,
  * smack_inode_unlink - Smack check on inode deletion
  * @dir: containing directory object
  * @dentry: file to unlink
+ * @mnt: vfsmount of file to unlink
  *
  * Returns 0 if current can write the containing directory
  * and the object, error code otherwise
@@ -481,6 +482,7 @@ static int smack_inode_unlink(struct inode *dir, struct dentry *dentry,
  * smack_inode_rmdir - Smack check on directory deletion
  * @dir: containing directory object
  * @dentry: directory to unlink
+ * @mnt: vfsmount @dentry to unlink
  *
  * Returns 0 if current can write the containing directory
  * and the directory, error code otherwise
@@ -507,8 +509,10 @@ static int smack_inode_rmdir(struct inode *dir, struct dentry *dentry,
  * smack_inode_rename - Smack check on rename
  * @old_inode: the old directory
  * @old_dentry: unused
+ * @old_mnt: unused
  * @new_inode: the new directory
  * @new_dentry: unused
+ * @new_mnt: unused
  *
  * Read and write access is required on both the old and
  * new directories.
@@ -591,10 +595,12 @@ static int smack_inode_getattr(struct vfsmount *mnt, struct dentry *dentry)
 /**
  * smack_inode_setxattr - Smack check for setting xattrs
  * @dentry: the object
+ * @mnt: unused
  * @name: name of the attribute
  * @value: unused
  * @size: unused
  * @flags: unused
+ * @file: unused
  *
  * This protects the Smack attribute explicitly.
  *
@@ -612,7 +618,8 @@ static int smack_inode_setxattr(struct dentry *dentry, struct vfsmount *mnt,
 		if (!capable(CAP_MAC_ADMIN))
 			rc = -EPERM;
 	} else
-		rc = cap_inode_setxattr(dentry, mnt, name, value, size, flags, file);
+		rc = cap_inode_setxattr(dentry, mnt, name, value, size, flags,
+					file);
 
 	if (rc == 0)
 		rc = smk_curacc(smk_of_inode(dentry->d_inode), MAY_WRITE);
@@ -623,6 +630,7 @@ static int smack_inode_setxattr(struct dentry *dentry, struct vfsmount *mnt,
 /**
  * smack_inode_post_setxattr - Apply the Smack update approved above
  * @dentry: object
+ * @mnt: unused
  * @name: attribute name
  * @value: attribute value
  * @size: attribute size
@@ -665,7 +673,9 @@ static void smack_inode_post_setxattr(struct dentry *dentry,
 /*
  * smack_inode_getxattr - Smack check on getxattr
  * @dentry: the object
+ * @mnt: unused
  * @name: unused
+ * @file: unused
  *
  * Returns 0 if access is permitted, an error code otherwise
  */
@@ -678,7 +688,9 @@ static int smack_inode_getxattr(struct dentry *dentry, struct vfsmount *mnt,
 /*
  * smack_inode_removexattr - Smack check on removexattr
  * @dentry: the object
+ * @mnt: unused
  * @name: name of the attribute
+ * @file: unused
  *
  * Removing the Smack attribute requires CAP_MAC_ADMIN
  *

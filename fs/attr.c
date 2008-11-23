@@ -160,7 +160,7 @@ int fnotify_change(struct dentry *dentry, struct vfsmount *mnt,
 	if (!(attr->ia_valid & ~(ATTR_KILL_SUID | ATTR_KILL_SGID)))
 		return 0;
 
-	error = security_inode_setattr(dentry, attr);
+	error = security_inode_setattr(dentry, mnt, attr);
 	if (error)
 		return error;
 

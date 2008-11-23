@@ -329,7 +329,8 @@ static int aa_audit_file(struct aa_profile *profile, struct aa_audit *sa)
 			return sa->error_code;
 
 		/* mask off perms whose denial is being silenced */
-		sa->denied_mask &= (~mask) | ALL_AA_EXEC_TYPE;
+		if (!PROFILE_COMPLAIN(profile))
+			sa->denied_mask &= (~mask) | ALL_AA_EXEC_TYPE;
 	}
 
 	return aa_audit(profile, sa);

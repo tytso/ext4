@@ -667,4 +667,5 @@ struct file_operations aufs_file_fop = {
 	.splice_write	= aufs_splice_write,
 	.splice_read	= aufs_splice_read,
 #endif
+	.fsetattr	= aufs_fsetattr,
 };
