@@ -567,7 +567,7 @@ void iwl_txq_ctx_stop(struct iwl_priv *priv)
 				   FH_TCSR_CHNL_TX_CONFIG_REG(txq_id), 0x0);
 		iwl_poll_direct_bit(priv, FH_TSSR_TX_STATUS_REG,
 				    FH_TSSR_TX_STATUS_REG_MSK_CHNL_IDLE
-				    (txq_id), 200);
+				    (txq_id), 1000);
 	}
 	iwl_release_nic_access(priv);
 	spin_unlock_irqrestore(&priv->lock, flags);
