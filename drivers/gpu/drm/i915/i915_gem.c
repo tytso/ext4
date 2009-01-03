@@ -2029,7 +2029,8 @@ i915_gem_execbuffer(struct drm_device *dev, void *data,
 
 		/* error other than GTT full, or we've already tried again */
 		if (ret != -ENOMEM || pin_tries >= 1) {
-			DRM_ERROR("Failed to pin buffers %d\n", ret);
+			if (ret != -ERESTARTSYS)
+				DRM_ERROR("Failed to pin buffers %d\n", ret);
 			goto err;
 		}
 
