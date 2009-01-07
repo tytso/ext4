@@ -44,17 +44,88 @@ static long acpi_video_support;
 static bool acpi_video_caps_checked;
 
 static acpi_status
+acpi_backlight_validate_bcl(acpi_handle handle)
+{
+	union acpi_object *obj, *obj2;
+	struct acpi_buffer buffer = { ACPI_ALLOCATE_BUFFER, NULL };
+	int level_ac = 0, level_battery = 0;
+	int i, count;
+	int *levels;
+	acpi_status status;
+
+
+	status = acpi_evaluate_object(handle, "_BCL", NULL, &buffer);
+	if (!ACPI_SUCCESS(status))
+		return status;
+	obj = (union acpi_object *)buffer.pointer;
+	if (!obj || (obj->type != ACPI_TYPE_PACKAGE)) {
+		printk(KERN_ERR PREFIX "Invalid _BCL data\n");
+		status = AE_BAD_DATA;
+		goto out;
+	}
+
+	if (obj->package.count < 2) {
+		status = AE_BAD_DATA;
+		goto out;
+	}
+
+        levels = kzalloc(obj->package.count * sizeof(*levels), GFP_KERNEL);
+	if (!levels) {
+		status = AE_NO_MEMORY;
+		goto out;
+	}
+
+	for (i = 0, count = 0; i < obj->package.count; i++) {
+		obj2 = (union acpi_object *)&obj->package.elements[i];
+		if (obj2->type != ACPI_TYPE_INTEGER) {
+			printk(KERN_ERR PREFIX "Invalid data\n");
+			continue;
+		}
+		levels[i] = (u32) obj2->integer.value;
+		count ++;
+        }
+
+        if (count < 2) {
+		status = AE_BAD_DATA;
+		goto out_free_levels;
+	}
+
+	for (i = 2, level_ac = levels[0], level_battery = levels[1]; i < count; i ++) {
+		if (levels[0] == levels[i])
+			level_ac = 1;
+		if (levels[1] == levels[i])
+			level_battery = 1;
+	}
+
+	if (!level_ac || !level_battery) {
+		printk(KERN_ERR PREFIX "Invalid _BCL package\n");
+		status = AE_BAD_DATA;
+		goto out_free_levels;
+	}
+
+        ACPI_DEBUG_PRINT((ACPI_DB_INFO, "found %d brightness levels\n", count));
+
+out_free_levels:
+	kfree(levels);
+out:
+        kfree(obj);
+        return status;
+}
+
+static acpi_status
 acpi_backlight_cap_match(acpi_handle handle, u32 level, void *context,
 			  void **retyurn_value)
 {
 	long *cap = context;
-	acpi_handle h_dummy;
+	acpi_handle h_dummy1, h_dummy2;
 
-	if (ACPI_SUCCESS(acpi_get_handle(handle, "_BCM", &h_dummy)) &&
-	    ACPI_SUCCESS(acpi_get_handle(handle, "_BCL", &h_dummy))) {
-		ACPI_DEBUG_PRINT((ACPI_DB_INFO, "Found generic backlight "
-				  "support\n"));
-		*cap |= ACPI_VIDEO_BACKLIGHT;
+	if (ACPI_SUCCESS(acpi_get_handle(handle, "_BCM", &h_dummy1)) &&
+	    ACPI_SUCCESS(acpi_get_handle(handle, "_BCL", &h_dummy2))) {
+		if (ACPI_SUCCESS(acpi_backlight_validate_bcl(h_dummy2))) {
+			ACPI_DEBUG_PRINT((ACPI_DB_INFO, "Found generic backlight "
+					  "support\n"));
+			*cap |= ACPI_VIDEO_BACKLIGHT;
+		}
 		/* We have backlight support, no need to scan further */
 		return AE_CTRL_TERMINATE;
 	}
