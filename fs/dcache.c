@@ -2119,7 +2119,7 @@ Elong:
  *		return NULL;
  *	}
  */
-asmlinkage long sys_getcwd(char __user *buf, unsigned long size)
+SYSCALL_DEFINE2(getcwd, char __user *, buf, unsigned long, size)
 {
 	int error, len;
 	struct path pwd, root, tmp;
