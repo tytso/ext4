@@ -2034,7 +2034,7 @@ out_unlock:
 	return error;
 }
 
-asmlinkage long sys_mknod(const char __user *filename, int mode, unsigned dev)
+SYSCALL_DEFINE3(mknod, const char __user *, filename, int, mode, unsigned, dev)
 {
 	return sys_mknodat(AT_FDCWD, filename, mode, dev);
 }
@@ -2309,7 +2309,7 @@ asmlinkage long sys_unlinkat(int dfd, const char __user *pathname, int flag)
 	return do_unlinkat(dfd, pathname);
 }
 
-asmlinkage long sys_unlink(const char __user *pathname)
+SYSCALL_DEFINE1(unlink, const char __user *, pathname)
 {
 	return do_unlinkat(AT_FDCWD, pathname);
 }
@@ -2374,7 +2374,7 @@ out_putname:
 	return error;
 }
 
-asmlinkage long sys_symlink(const char __user *oldname, const char __user *newname)
+SYSCALL_DEFINE2(symlink, const char __user *, oldname, const char __user *, newname)
 {
 	return sys_symlinkat(oldname, AT_FDCWD, newname);
 }
@@ -2476,7 +2476,7 @@ out:
 	return error;
 }
 
-asmlinkage long sys_link(const char __user *oldname, const char __user *newname)
+SYSCALL_DEFINE2(link, const char __user *, oldname, const char __user *, newname)
 {
 	return sys_linkat(AT_FDCWD, oldname, AT_FDCWD, newname, 0);
 }
