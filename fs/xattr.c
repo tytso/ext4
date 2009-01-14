@@ -506,8 +506,8 @@ SYSCALL_DEFINE2(removexattr, const char __user *, pathname,
 	return error;
 }
 
-asmlinkage long
-sys_lremovexattr(const char __user *pathname, const char __user *name)
+SYSCALL_DEFINE2(lremovexattr, const char __user *, pathname,
+		const char __user *, name)
 {
 	struct path path;
 	int error;
@@ -524,8 +524,7 @@ sys_lremovexattr(const char __user *pathname, const char __user *name)
 	return error;
 }
 
-asmlinkage long
-sys_fremovexattr(int fd, const char __user *name)
+SYSCALL_DEFINE2(fremovexattr, int, fd, const char __user *, name)
 {
 	struct file *f;
 	struct dentry *dentry;
