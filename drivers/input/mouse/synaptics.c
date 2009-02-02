@@ -60,10 +60,20 @@ static int synaptics_mode_cmd(struct psmouse *psmouse, unsigned char mode)
 	return 0;
 }
 
+static int synaptics_resume_reset = 1;
+module_param(synaptics_resume_reset, bool, 0);
+MODULE_PARM_DESC(synaptics_resume_reset,
+				"Enable reset on resume for Synaptics");
+
 int synaptics_detect(struct psmouse *psmouse, int set_properties)
 {
 	struct ps2dev *ps2dev = &psmouse->ps2dev;
 	unsigned char param[4];
+
+	if (synaptics_resume_reset) {
+		printk(KERN_CRIT "WARNING: synaptics was reset on resume, see synaptics_resume_reset if you have trouble on resume\n");
+		psmouse_reset(psmouse);
+	}
 
 	param[0] = 0;
 
