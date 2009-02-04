@@ -41,6 +41,7 @@
 #define BT_DBG(D...)
 #endif
 
+/* Backported patch would update version from 0.4 to 0.5 */
 #define VERSION "0.3"
 
 static int ignore_dga;
@@ -200,6 +201,7 @@ struct btusb_data {
 	struct usb_endpoint_descriptor *isoc_tx_ep;
 	struct usb_endpoint_descriptor *isoc_rx_ep;
 
+	unsigned int sco_num;
 	int isoc_altsetting;
 };
 
@@ -524,11 +526,23 @@ static int btusb_open(struct hci_dev *hdev)
 		return 0;
 
 	err = btusb_submit_intr_urb(hdev, GFP_KERNEL);
+	if (err < 0)
+		goto failed;
+
+	err = btusb_submit_bulk_urb(hdev, GFP_KERNEL);
 	if (err < 0) {
-		clear_bit(BTUSB_INTR_RUNNING, &data->flags);
-		clear_bit(HCI_RUNNING, &hdev->flags);
+		usb_kill_anchored_urbs(&data->intr_anchor);
+		goto failed;
 	}
 
+	set_bit(BTUSB_BULK_RUNNING, &data->flags);
+	btusb_submit_bulk_urb(hdev, GFP_KERNEL);
+
+	return 0;
+
+failed:
+	clear_bit(BTUSB_INTR_RUNNING, &data->flags);
+	clear_bit(HCI_RUNNING, &hdev->flags);
 	return err;
 }
 
@@ -683,19 +697,10 @@ static void btusb_notify(struct hci_dev *hdev, unsigned int evt)
 
 	BT_DBG("%s evt %d", hdev->name, evt);
 
-	if (hdev->conn_hash.acl_num > 0) {
-		if (!test_and_set_bit(BTUSB_BULK_RUNNING, &data->flags)) {
-			if (btusb_submit_bulk_urb(hdev, GFP_ATOMIC) < 0)
-				clear_bit(BTUSB_BULK_RUNNING, &data->flags);
-			else
-				btusb_submit_bulk_urb(hdev, GFP_ATOMIC);
-		}
-	} else {
-		clear_bit(BTUSB_BULK_RUNNING, &data->flags);
-		usb_unlink_anchored_urbs(&data->bulk_anchor);
-	}
-
-	schedule_work(&data->work);
+	if (hdev->conn_hash.sco_num != data->sco_num) {
+		data->sco_num = hdev->conn_hash.sco_num;
+		schedule_work(&data->work);
+        }
 }
 
 static int inline __set_isoc_interface(struct hci_dev *hdev, int altsetting)
