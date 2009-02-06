@@ -11,6 +11,9 @@
 #include <linux/types.h>
 #include <linux/uaccess.h>
 
+/* For debugging purposes; see block/ioctl.c */
+#define BLKDUMPUSEDBUFFERS _IO(0x12,130)
+
 static int compat_put_ushort(unsigned long arg, unsigned short val)
 {
 	return put_user(val, (unsigned short __user *)compat_ptr(arg));
@@ -734,6 +737,7 @@ long compat_blkdev_ioctl(struct file *file, unsigned cmd, unsigned long arg)
 	switch (cmd) {
 	case HDIO_GETGEO:
 		return compat_hdio_getgeo(disk, bdev, compat_ptr(arg));
+	case BLKDUMPUSEDBUFFERS:
 	case BLKFLSBUF:
 	case BLKROSET:
 	case BLKDISCARD:

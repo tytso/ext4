@@ -8,6 +8,10 @@
 #include <linux/blktrace_api.h>
 #include <asm/uaccess.h>
 
+/* For debugging purposes */
+#define BLKDUMPUSEDBUFFERS _IO(0x12,130)
+extern void dump_used_buffers(struct block_device *bdev);
+
 static int blkpg_ioctl(struct block_device *bdev, struct blkpg_ioctl_arg __user *arg)
 {
 	struct block_device *bdevp;
@@ -362,6 +366,13 @@ int blkdev_ioctl(struct block_device *bdev, fmode_t mode, unsigned cmd,
 		ret = blk_trace_ioctl(bdev, cmd, (char __user *) arg);
 		unlock_kernel();
 		break;
+	case BLKDUMPUSEDBUFFERS:
+		if (!capable(CAP_SYS_ADMIN))
+			return -EACCES;
+		dump_used_buffers(bdev);
+		ret = 0;
+		break;
+
 	default:
 		ret = __blkdev_driver_ioctl(bdev, mode, cmd, arg);
 	}

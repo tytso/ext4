@@ -33,6 +33,7 @@
 #include <linux/writeback.h>
 #include <linux/hash.h>
 #include <linux/suspend.h>
+#include <linux/pagevec.h>
 #include <linux/buffer_head.h>
 #include <linux/task_io_accounting_ops.h>
 #include <linux/bio.h>
@@ -292,6 +293,45 @@ static void free_more_memory(void)
 			try_to_free_pages(node_zonelist(nid, GFP_NOFS), 0,
 						GFP_NOFS, NULL);
 	}
+}
+
+void dump_used_buffers(struct block_device *bdev)
+{
+	struct inode *bd_inode = bdev->bd_inode;
+	struct address_space *bd_mapping = bd_inode->i_mapping;
+	struct buffer_head *bh, *head;
+	struct pagevec pvec;
+	unsigned long index = 0;
+	int nr_pages, i, count, total = 0;
+	char b[BDEVNAME_SIZE];
+
+	spin_lock(&bd_mapping->private_lock);
+	printk(KERN_INFO "Begin dump of block device %s\n", bdevname(bdev, b));
+	while (1) {
+		nr_pages = pagevec_lookup(&pvec, bd_mapping, index, PAGEVEC_SIZE);
+		if (nr_pages == 0)
+			break;
+		for (i = 0; i < nr_pages; i++) {
+			struct page *page = pvec.pages[i];
+			index = page->index + 1;
+
+			if (!page_has_buffers(page))
+				continue;
+			bh = head = page_buffers(page);
+			do {
+				count = atomic_read(&bh->b_count);
+				if (count) {
+					printk(KERN_INFO
+					       "buffer in-use: block %Lu count %d\n",
+					       (unsigned long long) bh->b_blocknr, count);
+					total++;
+				}
+				bh = bh->b_this_page;
+			} while (bh != head);
+		}
+	}
+	printk(KERN_INFO "Total number of in-use buffers: %d\n", total);
+	spin_unlock(&bd_mapping->private_lock);
 }
 
 /*
