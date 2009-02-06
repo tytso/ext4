@@ -340,6 +340,8 @@ struct ext4_new_group_data {
 #define EXT4_IOC32_SETVERSION_OLD	FS_IOC32_SETVERSION
 
 
+#define EXT4_IOC_DEBUG_DELALLOC		_IO('f', 42)
+
 /*
  *  Mount options
  */

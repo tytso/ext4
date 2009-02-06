@@ -18,6 +18,17 @@
 #include "ext4_jbd2.h"
 #include "ext4.h"
 
+static void print_inode_dealloc_info(struct inode *inode)
+{
+	if (!EXT4_I(inode)->i_reserved_data_blocks ||
+	    !EXT4_I(inode)->i_reserved_meta_blocks)
+		return;
+
+	printk(KERN_DEBUG "ino %lu: %u %u\n", inode->i_ino,
+	       EXT4_I(inode)->i_reserved_data_blocks,
+	       EXT4_I(inode)->i_reserved_meta_blocks);
+}
+
 long ext4_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
 	struct inode *inode = filp->f_dentry->d_inode;
@@ -276,6 +287,56 @@ setversion_out:
 		return err;
 	}
 
+	case EXT4_IOC_DEBUG_DELALLOC:
+	{
+#ifndef MODULE
+		extern spinlock_t inode_lock;
+#endif
+		struct super_block *sb = inode->i_sb;
+		struct ext4_sb_info *sbi = EXT4_SB(inode->i_sb);
+		struct inode *inode;
+
+		if (!capable(CAP_SYS_ADMIN))
+			return -EPERM;
+
+		printk(KERN_DEBUG "EXT4-fs debug delalloc of %s\n", sb->s_id);
+		printk(KERN_DEBUG "EXT4-fs: dirty blocks %lld free blocks %lld\n",
+		       percpu_counter_sum(&sbi->s_dirtyblocks_counter),
+		       percpu_counter_sum(&sbi->s_freeblocks_counter));
+#ifdef MODULE
+		/* Yuck; but the inode_lock spinlock is not exported */
+		lock_kernel();
+#else
+		spin_lock(&inode_lock);
+#endif
+		if (!list_empty(&sb->s_dirty)) {
+			printk(KERN_DEBUG "s_dirty list:\n");
+			list_for_each_entry(inode, &sb->s_dirty, i_list) {
+				print_inode_dealloc_info(inode);
+			}
+		}
+		if (!list_empty(&sb->s_io)) {
+			printk(KERN_DEBUG "s_io list:\n");
+			list_for_each_entry(inode, &sb->s_io, i_list) {
+				print_inode_dealloc_info(inode);
+			}
+		}
+		if (!list_empty(&sb->s_more_io)) {
+			printk(KERN_DEBUG "s_more_io list:\n");
+			list_for_each_entry(inode, &sb->s_more_io, i_list) {
+				print_inode_dealloc_info(inode);
+			}
+		}
+#ifdef MODULE
+		lock_kernel();
+#else
+		spin_unlock(&inode_lock);
+#endif
+		printk(KERN_DEBUG "ext4 debug delalloc done\n");
+		return 0;
+	}
+
+
 	default:
 		return -ENOTTY;
 	}
@@ -319,6 +380,7 @@ long ext4_compat_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		cmd = EXT4_IOC_SETRSVSZ;
 		break;
 	case EXT4_IOC_GROUP_ADD:
+	case EXT4_IOC_DEBUG_DELALLOC:
 		break;
 	default:
 		return -ENOIOCTLCMD;
