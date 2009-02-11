@@ -267,6 +267,12 @@ config X86_PC
 	help
 	  Choose this option if your computer is a standard PC or compatible.
 
+config X86_LPIA
+	bool "LPIA-compatible"
+	depends on X86_32 && X86_PC
+	help
+	  Choose this option if your computer is an LPIA platform.
+
 config X86_ELAN
 	bool "AMD Elan"
 	depends on X86_32
