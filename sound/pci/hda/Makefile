@@ -11,6 +11,7 @@ snd-hda-intel-$(CONFIG_SND_HDA_CODEC_REALTEK) += patch_realtek.o
 snd-hda-intel-$(CONFIG_SND_HDA_CODEC_CMEDIA) += patch_cmedia.o
 snd-hda-intel-$(CONFIG_SND_HDA_CODEC_ANALOG) += patch_analog.o
 snd-hda-intel-$(CONFIG_SND_HDA_CODEC_SIGMATEL) += patch_sigmatel.o
+snd-hda-intel-$(CONFIG_SND_LPIA_HDA_CODEC_SIGMATEL) += lpia_ubuntu_patch_sigmatel.o
 snd-hda-intel-$(CONFIG_SND_HDA_CODEC_SI3054) += patch_si3054.o
 snd-hda-intel-$(CONFIG_SND_HDA_CODEC_ATIHDMI) += patch_atihdmi.o
 snd-hda-intel-$(CONFIG_SND_HDA_CODEC_CONEXANT) += patch_conexant.o

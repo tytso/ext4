@@ -550,6 +550,14 @@ config SND_HDA_CODEC_SIGMATEL
 	  Say Y here to include IDT (Sigmatel) HD-audio codec support in
 	  snd-hda-intel driver, such as STAC9200.
 
+config SND_LPIA_HDA_CODEC_SIGMATEL
+	bool "Build IDT/Sigmatel HD-audio codec support for LPIA"
+	depends on SND_HDA_INTEL && !SND_HDA_CODEC_SIGMATEL
+	default y
+	help
+	  Say Y here to include IDT (Sigmatel) HD-audio codec support in
+	  snd-hda-intel driver, such as STAC9200.
+
 config SND_HDA_CODEC_VIA
 	bool "Build VIA HD-audio codec support"
 	depends on SND_HDA_INTEL
