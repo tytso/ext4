@@ -1033,8 +1033,10 @@ static int hci_usb_suspend(struct usb_interface *intf, pm_message_t message)
 		while ((_urb = _urb_dequeue(q))) {
 			/* reset queue since _urb_dequeue sets it to NULL */
 			_urb->queue = q;
-			usb_kill_urb(&_urb->urb);
+			spin_lock_irqsave(&q->lock, flags);
 			list_add(&_urb->list, &killed);
+			spin_unlock_irqrestore(&q->lock, flags);
+			usb_kill_urb(&_urb->urb);
 		}
 
 		spin_lock_irqsave(&q->lock, flags);
