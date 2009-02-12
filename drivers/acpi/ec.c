@@ -1009,7 +1009,7 @@ int __init acpi_ec_ecdt_probe(void)
 	} else {
 		/* This workaround is needed only on some broken machines,
 		 * which require early EC, but fail to provide ECDT */
-		acpi_handle x;
+		acpi_handle dummy;
 		printk(KERN_DEBUG PREFIX "Look up EC in DSDT\n");
 		status = acpi_get_devices(ec_device_ids[0].id, ec_parse_device,
 						boot_ec, NULL);
@@ -1020,7 +1020,9 @@ int __init acpi_ec_ecdt_probe(void)
 		 * which needs it, has fake EC._INI method, so use it as flag.
 		 * Keep boot_ec struct as it will be needed soon.
 		 */
-		if (ACPI_FAILURE(acpi_get_handle(boot_ec->handle, "_INI", &x)))
+		if (!dmi_name_in_vendors("ASUS") ||
+		    ACPI_FAILURE(acpi_get_handle(boot_ec->handle, "_INI",
+						&dummy)))
 			return -ENODEV;
 	}
 
