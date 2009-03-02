@@ -1992,3 +1992,5 @@ panic:
 }
 
 core_initcall(netlink_proto_init);
+
+MODULE_ALIAS_NETPROTO(PF_NETLINK);
