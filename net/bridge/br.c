@@ -16,6 +16,7 @@
 #include <linux/netdevice.h>
 #include <linux/etherdevice.h>
 #include <linux/init.h>
+#include <linux/net.h>
 #include <linux/llc.h>
 #include <net/llc.h>
 #include <net/stp.h>
@@ -108,3 +109,4 @@ module_init(br_init)
 module_exit(br_deinit)
 MODULE_LICENSE("GPL");
 MODULE_VERSION(BR_VERSION);
+MODULE_ALIAS_NETPROTO(PF_BRIDGE);
