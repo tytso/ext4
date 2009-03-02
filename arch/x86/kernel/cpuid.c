@@ -237,3 +237,4 @@ module_exit(cpuid_exit);
 MODULE_AUTHOR("H. Peter Anvin <hpa@zytor.com>");
 MODULE_DESCRIPTION("x86 generic CPUID driver");
 MODULE_LICENSE("GPL");
+MODULE_ALIAS_CHARDEV_MAJOR(CPUID_MAJOR);
