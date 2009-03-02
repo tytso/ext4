@@ -967,5 +967,6 @@ static void __exit pcd_exit(void)
 }
 
 MODULE_LICENSE("GPL");
+MODULE_ALIAS_BLOCKDEV_MAJOR(PCD_MAJOR);
 module_init(pcd_init)
 module_exit(pcd_exit)
