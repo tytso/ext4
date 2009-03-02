@@ -614,6 +614,7 @@ MODULE_AUTHOR("Frodo Looijaard <frodol@dds.nl> and "
 		"Simon G. Vogl <simon@tk.uni-linz.ac.at>");
 MODULE_DESCRIPTION("I2C /dev entries driver");
 MODULE_LICENSE("GPL");
+MODULE_ALIAS_CHARDEV_MAJOR(I2C_MAJOR);
 
 module_init(i2c_dev_init);
 module_exit(i2c_dev_exit);
