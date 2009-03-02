@@ -23,6 +23,7 @@
 #include <linux/module.h>
 #include <linux/list.h>
 #include <linux/skbuff.h>
+#include <linux/net.h>
 #include <linux/netlink.h>
 #include <linux/moduleparam.h>
 #include <linux/connector.h>
@@ -35,6 +36,7 @@
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Evgeniy Polyakov <johnpol@2ka.mipt.ru>");
 MODULE_DESCRIPTION("Generic userspace <-> kernelspace connector.");
+MODULE_ALIAS_NET_PF_PROTO(PF_NETLINK, NETLINK_CONNECTOR);
 
 static u32 cn_idx = CN_IDX_CONNECTOR;
 static u32 cn_val = CN_VAL_CONNECTOR;
