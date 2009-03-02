@@ -22,6 +22,8 @@
  */
 #include <linux/module.h>
 #include <linux/mutex.h>
+#include <linux/net.h>
+#include <linux/netlink.h>
 #include <net/tcp.h>
 #include <scsi/scsi.h>
 #include <scsi/scsi_host.h>
@@ -2016,3 +2018,4 @@ MODULE_AUTHOR("Mike Christie <michaelc@cs.wisc.edu>, "
 MODULE_DESCRIPTION("iSCSI Transport Interface");
 MODULE_LICENSE("GPL");
 MODULE_VERSION(ISCSI_TRANSPORT_VERSION);
+MODULE_ALIAS_NET_PF_PROTO(PF_NETLINK, NETLINK_ISCSI);
