@@ -69,6 +69,7 @@
 #include <linux/init.h>
 #include <linux/hdreg.h>
 #include <linux/vmalloc.h>
+#include <linux/blkdev.h>
 #include <linux/blkpg.h>
 #include <asm/uaccess.h>
 
@@ -1116,3 +1117,4 @@ module_exit(cleanup_ftl);
 MODULE_LICENSE("Dual MPL/GPL");
 MODULE_AUTHOR("David Hinds <dahinds@users.sourceforge.net>");
 MODULE_DESCRIPTION("Support code for Flash Translation Layer, used on PCMCIA devices");
+MODULE_ALIAS_BLOCKDEV_MAJOR(FTL_MAJOR);
