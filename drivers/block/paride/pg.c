@@ -718,5 +718,6 @@ static void __exit pg_exit(void)
 }
 
 MODULE_LICENSE("GPL");
+MODULE_ALIAS_CHARDEV_MAJOR(PG_MAJOR);
 module_init(pg_init)
 module_exit(pg_exit)
