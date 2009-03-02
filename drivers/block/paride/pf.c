@@ -988,5 +988,6 @@ static void __exit pf_exit(void)
 }
 
 MODULE_LICENSE("GPL");
+MODULE_ALIAS_BLOCKDEV_MAJOR(PF_MAJOR);
 module_init(pf_init)
 module_exit(pf_exit)
