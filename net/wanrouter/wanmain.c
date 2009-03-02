@@ -791,6 +791,7 @@ EXPORT_SYMBOL(register_wan_device);
 EXPORT_SYMBOL(unregister_wan_device);
 
 MODULE_LICENSE("GPL");
+MODULE_ALIAS_NETPROTO(PF_WANPIPE);
 
 /*
  *	End
