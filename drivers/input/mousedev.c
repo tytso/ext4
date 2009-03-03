@@ -1066,6 +1066,8 @@ static struct miscdevice psaux_mouse = {
 	PSMOUSE_MINOR, "psaux", &mousedev_fops
 };
 static int psaux_registered;
+
+MODULE_ALIAS_MISCDEV(PSMOUSE_MINOR);
 #endif
 
 static int __init mousedev_init(void)
