@@ -497,10 +497,10 @@ static char *aa_get_name(struct dentry *dentry, struct vfsmount *mnt,
 			*buffer = buf;
 			return name;
 		}
+		kfree(buf);
 		if (PTR_ERR(name) != -ENAMETOOLONG)
 			return name;
 
-		kfree(buf);
 		size <<= 1;
 		if (size > apparmor_path_max)
 			return ERR_PTR(-ENAMETOOLONG);
