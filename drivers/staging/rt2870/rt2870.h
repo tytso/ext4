@@ -143,6 +143,7 @@
 	{USB_DEVICE(0x0789,0x0162)}, /* Logitec */		\
 	{USB_DEVICE(0x0789,0x0163)}, /* Logitec */		\
 	{USB_DEVICE(0x0789,0x0164)}, /* Logitec */		\
+	{USB_DEVICE(0x1737,0x0071)}, /* Linksys */		\
 	{ }/* Terminating entry */                      \
 }
 
