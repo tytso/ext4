@@ -67,6 +67,7 @@
 MODULE_DESCRIPTION("3780i Advanced Communications Processor (Mwave) driver");
 MODULE_AUTHOR("Mike Sullivan and Paul Schroeder");
 MODULE_LICENSE("GPL");
+MODULE_ALIAS_MISCDEV(MWAVE_MINOR);
 
 /*
 * These parameters support the setting of MWave resources. Note that no
