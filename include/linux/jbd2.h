@@ -1022,6 +1022,7 @@ struct journal_s
 #define JBD2_ABORT_ON_SYNCDATA_ERR	0x040	/* Abort the journal on file
 						 * data write error in ordered
 						 * mode */
+#define JBD2_LOCK_HACK	0x080	/* akpm's locking hack */
 
 /*
  * Function declarations for the journaling transaction and buffer

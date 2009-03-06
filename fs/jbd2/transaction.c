@@ -549,6 +549,7 @@ do_get_write_access(handle_t *handle, struct journal_head *jh,
 	int error;
 	char *frozen_buffer = NULL;
 	int need_copy = 0;
+	int locked = 0;
 
 	if (is_handle_aborted(handle))
 		return -EROFS;
@@ -564,7 +565,13 @@ repeat:
 
 	/* @@@ Need to check for errors here at some point. */
 
-	lock_buffer(bh);
+	if (journal->j_flags & JBD2_LOCK_HACK) {
+		if (trylock_buffer(bh))
+			locked = 1;	/* lolz */
+	} else {
+		lock_buffer(bh);
+		locked = 1;
+	}
 	jbd_lock_bh_state(bh);
 
 	/* We now hold the buffer lock so it is safe to query the buffer
@@ -603,7 +610,8 @@ repeat:
 		jbd_unexpected_dirty_buffer(jh);
 	}
 
-	unlock_buffer(bh);
+	if (locked)
+		unlock_buffer(bh);
 
 	error = -EROFS;
 	if (is_handle_aborted(handle)) {

@@ -846,6 +846,8 @@ static int ext4_show_options(struct seq_file *seq, struct vfsmount *vfs)
 		seq_puts(seq, ",journal_async_commit");
 	if (test_opt(sb, NOBH))
 		seq_puts(seq, ",nobh");
+	if (test_opt(sb, AKPM_LOCK_HACK))
+		seq_puts(seq, ",akpm_lock_hack");
 	if (test_opt(sb, I_VERSION))
 		seq_puts(seq, ",i_version");
 	if (!test_opt(sb, DELALLOC))
@@ -1037,7 +1039,7 @@ enum {
 	Opt_ignore, Opt_barrier, Opt_nobarrier, Opt_err, Opt_resize,
 	Opt_usrquota, Opt_grpquota, Opt_i_version,
 	Opt_stripe, Opt_delalloc, Opt_nodelalloc,
-	Opt_inode_readahead_blks, Opt_journal_ioprio
+	Opt_inode_readahead_blks, Opt_journal_ioprio, Opt_akpm_lock_hack
 };
 
 static const match_table_t tokens = {
@@ -1094,6 +1096,7 @@ static const match_table_t tokens = {
 	{Opt_i_version, "i_version"},
 	{Opt_stripe, "stripe=%u"},
 	{Opt_resize, "resize"},
+	{Opt_akpm_lock_hack, "akpm_lock_hack"},
 	{Opt_delalloc, "delalloc"},
 	{Opt_nodelalloc, "nodelalloc"},
 	{Opt_inode_readahead_blks, "inode_readahead_blks=%u"},
@@ -1518,6 +1521,9 @@ set_qf_format:
 				clear_opt(sbi->s_mount_opt, NO_AUTO_DA_ALLOC);
 			else
 				set_opt(sbi->s_mount_opt,NO_AUTO_DA_ALLOC);
+			break;
+		case Opt_akpm_lock_hack:
+			set_opt(sbi->s_mount_opt, AKPM_LOCK_HACK);
 			break;
 		default:
 			printk(KERN_ERR
@@ -2923,6 +2929,10 @@ static void ext4_init_journal_params(struct super_block *sb, journal_t *journal)
 		journal->j_flags |= JBD2_ABORT_ON_SYNCDATA_ERR;
 	else
 		journal->j_flags &= ~JBD2_ABORT_ON_SYNCDATA_ERR;
+	if (test_opt(sb, AKPM_LOCK_HACK))
+		journal->j_flags |= JBD2_LOCK_HACK;
+	else
+		journal->j_flags &= ~JBD2_LOCK_HACK;
 	spin_unlock(&journal->j_state_lock);
 }
 
