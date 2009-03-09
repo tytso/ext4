@@ -23,3 +23,4 @@ obj-$(CONFIG_BACKLIGHT_MBP_NVIDIA) += mbp_nvidia_bl.o
 obj-$(CONFIG_BACKLIGHT_TOSA)	+= tosa_bl.o
 obj-$(CONFIG_BACKLIGHT_SAHARA)	+= kb3886_bl.o
 
+obj-$(CONFIG_BACKLIGHT_MXC_MC13892) += mxc_mc13892_bl.o

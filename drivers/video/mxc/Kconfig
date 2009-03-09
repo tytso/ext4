@@ -1,0 +1,34 @@
+config FB_MXC
+	tristate "MXC Framebuffer support"
+	depends on FB && MXC_IPU
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	default y
+	help
+	  This is a framebuffer device for the MXC LCD Controller.
+	  See <http://www.linux-fbdev.org/> for information on framebuffer
+	  devices.
+
+	  If you plan to use the LCD display with your MXC system, say
+	  Y here.
+
+config FB_MXC_SYNC_PANEL
+	depends on FB_MXC
+	tristate "Synchronous Panel Framebuffer"
+	default y
+
+config FB_MXC_EPSON_VGA_SYNC_PANEL
+	depends on FB_MXC_SYNC_PANEL
+	tristate "Epson VGA Panel"
+	default n
+
+config FB_MXC_TVOUT_TVE
+	tristate "MXC TVE TV Out Encoder"
+	depends on FB_MXC_SYNC_PANEL
+	depends on MXC_IPU_V3
+
+config FB_MXC_CH7026
+	depends on FB_MXC_SYNC_PANEL
+	tristate "Chrontel CH7026 VGA Interface Chip"
+

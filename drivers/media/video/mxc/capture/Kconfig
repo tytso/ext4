@@ -1,0 +1,56 @@
+if VIDEO_MXC_CAMERA
+
+menu "MXC Camera/V4L2 PRP Features support"
+config VIDEO_MXC_IPU_CAMERA
+	bool
+	depends on VIDEO_MXC_CAMERA && MXC_IPU
+	default y
+
+choice
+	prompt "Select Camera/TV Decoder"
+	default MXC_CAMERA_OV3640
+	depends on VIDEO_MXC_CAMERA
+
+config MXC_CAMERA_OV3640
+	tristate "OmniVision ov3640 camera support"
+	depends on !VIDEO_MXC_EMMA_CAMERA
+	---help---
+	  If you plan to use the ov3640 Camera with your MXC system, say Y here.
+
+endchoice
+
+config MXC_IPU_PRP_VF_SDC
+	tristate "Pre-Processor VF SDC library"
+	depends on VIDEO_MXC_IPU_CAMERA && FB_MXC_SYNC_PANEL
+	default y
+	---help---
+	  Use case PRP_VF_SDC:
+		Preprocessing image from smart sensor for viewfinder and
+		displaying it on synchronous display with SDC use case.
+		If SDC BG is selected, Rotation will not be supported.
+		CSI -> IC (PRP VF) -> MEM
+		MEM -> IC (ROT) -> MEM
+		MEM -> SDC (FG/BG)
+
+config MXC_IPU_PRP_VF_ADC
+	tristate "Pre-Processor VF ADC library"
+	depends on VIDEO_MXC_IPU_CAMERA && FB_MXC_ASYNC_PANEL
+	default y
+	---help---
+	  Use case PRP_VF_ADC:
+		Preprocessing image from smart sensor for viewfinder and
+		displaying it on asynchronous display.
+		CSI -> IC (PRP VF) -> ADC2
+
+config MXC_IPU_PRP_ENC
+	tristate "Pre-processor Encoder library"
+	depends on VIDEO_MXC_IPU_CAMERA
+	default y
+	---help---
+	  Use case PRP_ENC:
+		Preprocessing image from smart sensor for encoder.
+		CSI -> IC (PRP ENC) -> MEM
+
+endmenu
+
+endif

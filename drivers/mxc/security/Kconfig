@@ -1,0 +1,22 @@
+menu "MXC Security Drivers"
+
+config MXC_SECURITY_SCC2
+        tristate "MXC SCC2 Driver"
+        depends on ARCH_MX51
+        default n
+        ---help---
+          This module contains the core API's for accessing the SCC2 module.
+          If you are unsure about this, say N here.
+
+config SCC_DEBUG
+        bool "MXC SCC Module debugging"
+        depends on MXC_SECURITY_SCC || MXC_SECURITY_SCC2
+        ---help---
+        This is an option for use by developers; most people should
+        say N here.  This enables SCC module debugging.
+
+if (ARCH_MX51)
+source "drivers/mxc/security/sahara2/Kconfig"
+endif
+
+endmenu
