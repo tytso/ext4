@@ -100,12 +100,10 @@ ENTRY(vfp_support_entry)
 	beq	no_old_VFP_process
 	VFPFSTMIA r4, r5		@ save the working registers
 	VFPFMRX	r5, FPSCR		@ current status
-#ifndef CONFIG_CPU_FEROCEON
 	tst	r1, #FPEXC_EX		@ is there additional state to save?
 	VFPFMRX	r6, FPINST, NE		@ FPINST (only if FPEXC.EX is set)
 	tstne	r1, #FPEXC_FP2V		@ is there an FPINST2 to read?
 	VFPFMRX	r8, FPINST2, NE		@ FPINST2 if needed (and present)
-#endif
 	stmia	r4, {r1, r5, r6, r8}	@ save FPEXC, FPSCR, FPINST, FPINST2
 					@ and point r4 at the word at the
 					@ start of the register dump
@@ -118,12 +116,10 @@ no_old_VFP_process:
 	VFPFLDMIA r10, r5		@ reload the working registers while
 					@ FPEXC is in a safe state
 	ldmia	r10, {r1, r5, r6, r8}	@ load FPEXC, FPSCR, FPINST, FPINST2
-#ifndef CONFIG_CPU_FEROCEON
 	tst	r1, #FPEXC_EX		@ is there additional state to restore?
 	VFPFMXR	FPINST, r6, NE		@ restore FPINST (only if FPEXC.EX is set)
 	tstne	r1, #FPEXC_FP2V		@ is there an FPINST2 to write?
 	VFPFMXR	FPINST2, r8, NE		@ FPINST2 if needed (and present)
-#endif
 	VFPFMXR	FPSCR, r5		@ restore status
 
 check_for_exception:
