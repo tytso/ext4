@@ -1,1 +1,4 @@
 net2280
+ehci-hcd
+uhci-hcd
+ohci-hcd
