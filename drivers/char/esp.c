@@ -51,7 +51,6 @@
 #include <linux/serialP.h>
 #include <linux/serial_reg.h>
 #include <linux/major.h>
-#include <linux/device.h>
 #include <linux/string.h>
 #include <linux/fcntl.h>
 #include <linux/ptrace.h>
@@ -86,8 +85,6 @@ static unsigned int rx_timeout = ESP_RX_TMOUT;
 static unsigned int pio_threshold = ESP_PIO_THRESHOLD;
 
 MODULE_LICENSE("GPL");
-MODULE_ALIAS_CHARDEV_MAJOR(ESP_IN_MAJOR);
-
 
 module_param_array(irq, int, NULL, 0);
 module_param_array(divisor, uint, NULL, 0);
