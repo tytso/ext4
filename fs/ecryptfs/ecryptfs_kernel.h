@@ -328,7 +328,6 @@ struct ecryptfs_dentry_info {
  */
 struct ecryptfs_global_auth_tok {
 #define ECRYPTFS_AUTH_TOK_INVALID 0x00000001
-#define ECRYPTFS_AUTH_TOK_FNEK    0x00000002
 	u32 flags;
 	struct list_head mount_crypt_stat_list;
 	struct key *global_auth_tok_key;
@@ -697,7 +696,7 @@ ecryptfs_write_header_metadata(char *virt,
 int ecryptfs_add_keysig(struct ecryptfs_crypt_stat *crypt_stat, char *sig);
 int
 ecryptfs_add_global_auth_tok(struct ecryptfs_mount_crypt_stat *mount_crypt_stat,
-			   char *sig, u32 global_auth_tok_flags);
+			   char *sig);
 int ecryptfs_get_global_auth_tok_for_sig(
 	struct ecryptfs_global_auth_tok **global_auth_tok,
 	struct ecryptfs_mount_crypt_stat *mount_crypt_stat, char *sig);
