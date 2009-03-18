@@ -395,6 +395,7 @@ dst_ca
 dstr
 dtl1_cs
 dummy
+dummy_hcd
 dv1394
 dvb-bt8xx
 dvb-core
@@ -462,7 +463,6 @@ eepro100
 eeprom
 eeprom_93cx6
 efs
-ehci-hcd
 elo
 elsa_cs
 em28xx
@@ -1103,7 +1103,6 @@ ndiswrapper
 ne2k-pci
 neofb
 net1080
-net2280
 netconsole
 netrom
 netsc520
@@ -1209,7 +1208,6 @@ ocfs2_stackglue
 ocfs2_stack_o2cb
 ocfs2_stack_user
 ohci1394
-ohci-hcd
 old_belkin-sir
 olympic
 omfs
@@ -1859,7 +1857,6 @@ ucb1400_ts
 udf
 ueagle-atm
 ufs
-uhci-hcd
 uinput
 uio
 uio_cif
