@@ -865,8 +865,6 @@ int i915_driver_load(struct drm_device *dev, unsigned long flags)
 	if (!IS_I945G(dev) && !IS_I945GM(dev))
 		pci_enable_msi(dev->pdev);
 
-	intel_opregion_init(dev);
-
 	spin_lock_init(&dev_priv->user_irq_lock);
 
 	ret = drm_vblank_init(dev, I915_NUM_PIPE);
@@ -875,6 +873,9 @@ int i915_driver_load(struct drm_device *dev, unsigned long flags)
 		(void) i915_driver_unload(dev);
 		return ret;
 	}
+
+	/* Must be done after probing outputs */
+	intel_opregion_init(dev);
 
 	return ret;
 }
