@@ -77,9 +77,9 @@ char heci_copyright[] = "Copyright (c) 2003 - 2007 Intel Corporation.";
 
 
 #ifdef HECI_DEBUG
-DEF_PARM(int, debug, 1, 0644, "Debug enabled or not");
+DEF_PARM(int, heci_debug, 1, 0644, "Debug enabled or not");
 #else
-DEF_PARM(int, debug, 0, 0644, "Debug enabled or not");
+DEF_PARM(int, heci_debug, 0, 0644, "Debug enabled or not");
 #endif
 
 /* heci char device for registration */

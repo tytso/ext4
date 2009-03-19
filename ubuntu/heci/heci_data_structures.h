@@ -125,9 +125,9 @@
 	MODULE_PARM_DESC(name, desc);	\
 	module_param(name, type, perm)
 
-extern int debug;
+extern int heci_debug;
 
-#define DBG(format, arg...) do {if (debug) \
+#define DBG(format, arg...) do {if (heci_debug) \
 printk(KERN_ERR "%s: " format , __func__ , ## arg); \
 } while (0)
 
