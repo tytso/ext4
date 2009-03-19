@@ -158,13 +158,7 @@ int do_vfsub_mknod(struct inode *dir, struct dentry *dentry, int mode,
 	LKTRTrace("i%lu, %.*s, 0x%x\n", dir->i_ino, AuDLNPair(dentry), mode);
 	IMustLock(dir);
 
-	#ifdef CONFIG_VSERVER
-	err = vfs_mknod(dir, dentry, mode, dev, NULL);
-	#elif defined(CONFIG_SECURITY_APPARMOR)
 	err = vfs_mknod(dir, dentry, NULL, mode, dev);
-	#else
-	err = vfs_mknod(dir, dentry, mode, dev);
-	#endif
 	if (!err) {
 		/* dir inode is locked */
 		au_update_fuse_h_inode(NULL, dentry->d_parent); /*ignore*/
@@ -183,13 +177,7 @@ int do_vfsub_link(struct dentry *src_dentry, struct inode *dir,
 	IMustLock(dir);
 
 	lockdep_off();
-	#ifdef CONFIG_VSERVER
-	err = vfs_link(src_dentry, dir, dentry, NULL);
-	#elif defined(CONFIG_SECURITY_APPARMOR)
 	err = vfs_link(src_dentry, NULL, dir, dentry, NULL);
-	#else
-	err = vfs_link(src_dentry, dir, dentry);
-	#endif
 
 	lockdep_on();
 	if (!err) {
@@ -216,11 +204,7 @@ int do_vfsub_rename(struct inode *src_dir, struct dentry *src_dentry,
 	IMustLock(src_dir);
 
 	lockdep_off();
-	#ifdef CONFIG_SECURITY_APPARMOR
 	err = vfs_rename(src_dir, src_dentry, NULL, dir, dentry, NULL);
-	#else
-	err = vfs_rename(src_dir, src_dentry, dir, dentry);
-	#endif
 	lockdep_on();
 	if (!err) {
 		/* dir inode is locked */
@@ -238,13 +222,7 @@ int do_vfsub_mkdir(struct inode *dir, struct dentry *dentry, int mode)
 	LKTRTrace("i%lu, %.*s, 0x%x\n", dir->i_ino, AuDLNPair(dentry), mode);
 	IMustLock(dir);
 
-	#ifdef CONFIG_VSERVER
-	err = vfs_mkdir(dir, dentry, mode, NULL);
-	#elif defined(CONFIG_SECURITY_APPARMOR)
 	err = vfs_mkdir(dir, dentry, NULL, mode);
-	#else
-	err = vfs_mkdir(dir, dentry, mode);
-	#endif
 
 	if (!err) {
 		/* dir inode is locked */
@@ -262,11 +240,7 @@ int do_vfsub_rmdir(struct inode *dir, struct dentry *dentry)
 	IMustLock(dir);
 
 	lockdep_off();
-	#if defined(CONFIG_VSERVER) || defined(CONFIG_SECURITY_APPARMOR)
 	err = vfs_rmdir(dir, dentry, NULL);
-	#else
-	err = vfs_rmdir(dir, dentry);
-	#endif
 
 	lockdep_on();
 	/* dir inode is locked */
@@ -284,11 +258,7 @@ int do_vfsub_unlink(struct inode *dir, struct dentry *dentry)
 
 	/* vfs_unlink() locks inode */
 	lockdep_off();
-	#if defined(CONFIG_VSERVER) || defined(CONFIG_SECURITY_APPARMOR)
 	err = vfs_unlink(dir, dentry, NULL);
-	#else
-	err = vfs_unlink(dir, dentry);
-	#endif
 
 	lockdep_on();
 	/* dir inode is locked */
