@@ -5,6 +5,12 @@ linux (2.6.28-11.36) jaunty; urgency=low
   * Updating imx51 configs one more time
   * Disable CONFIG_UEVENT_HELPER_PATH
 
+  [ Anton Veretenenko ]
+
+  * SAUCE: sony-laptop: add support for Sony Vaio FW series function/media
+    keys
+    - LP: #307592
+
   [ Brad Figg ]
 
   * Have AUFS use current VFS APIs so it can build with or without
