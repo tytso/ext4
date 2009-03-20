@@ -107,6 +107,7 @@ MODULE_ALIAS("dmi:*:*Acer*:*:");
 #define ACER_CAP_BLUETOOTH		(1<<2)
 #define ACER_CAP_BRIGHTNESS		(1<<3)
 #define ACER_CAP_THREEG			(1<<4)
+#define ACER_CAP_SWRFKILL		(1<<5)
 #define ACER_CAP_ANY			(0xFFFFFFFF)
 
 /*
@@ -138,6 +139,10 @@ MODULE_PARM_DESC(mailled, "Set initial state of Mail LED");
 MODULE_PARM_DESC(brightness, "Set initial LCD backlight brightness");
 MODULE_PARM_DESC(threeg, "Set initial state of 3G hardware");
 MODULE_PARM_DESC(force_series, "Force a different laptop series");
+
+static int rfkill = -1;
+module_param(rfkill, bool, 0444);
+MODULE_PARM_DESC(rfkill, "Force software rfkill on/off");
 
 struct acer_data {
 	int mailled;
@@ -183,6 +188,7 @@ struct quirk_entry {
 	u8 mailled;
 	s8 brightness;
 	u8 bluetooth;
+	u8 hw_rfkill;
 };
 
 static struct quirk_entry *quirks;
@@ -197,6 +203,9 @@ static void set_quirks(void)
 
 	if (quirks->brightness)
 		interface->capability |= ACER_CAP_BRIGHTNESS;
+
+	if (!quirks->hw_rfkill)
+		interface->capability |= ACER_CAP_SWRFKILL;
 }
 
 static int dmi_matched(const struct dmi_system_id *dmi)
@@ -214,6 +223,10 @@ static struct quirk_entry quirk_acer_aspire_1520 = {
 
 static struct quirk_entry quirk_acer_travelmate_2490 = {
 	.mailled = 1,
+};
+
+static struct quirk_entry quirk_acer_aspire_one = {
+	.hw_rfkill = 1,
 };
 
 /* This AMW0 laptop has no bluetooth */
@@ -333,6 +346,24 @@ static struct dmi_system_id acer_quirks[] = {
 			DMI_MATCH(DMI_PRODUCT_NAME, "TravelMate 4200"),
 		},
 		.driver_data = &quirk_acer_travelmate_2490,
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Acer Aspire One 110",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "Acer"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "AOA110"),
+		},
+		.driver_data = &quirk_acer_aspire_one,
+	},
+	{
+		.callback = dmi_matched,
+		.ident = "Acer Aspire One 150",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "Acer"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "AOA150"),
+		},
+		.driver_data = &quirk_acer_aspire_one,
 	},
 	{
 		.callback = dmi_matched,
@@ -999,6 +1030,8 @@ enum rfkill_type type, char *name, u32 cap)
 
 static int acer_rfkill_init(struct device *dev)
 {
+	printk(ACER_INFO "software RFKILL enabled\n");
+
 	wireless_rfkill = acer_rfkill_register(dev, RFKILL_TYPE_WLAN,
 		"acer-wireless", ACER_CAP_WIRELESS);
 	if (IS_ERR(wireless_rfkill))
@@ -1116,12 +1149,20 @@ static int __devinit acer_platform_probe(struct platform_device *device)
 			goto error_brightness;
 	}
 
-	err = acer_rfkill_init(&device->dev);
+	if ((has_cap(ACER_CAP_SWRFKILL) || rfkill == 1) && rfkill != 0) {
+		err = acer_rfkill_init(&device->dev);
+		if (err)
+			goto error_rfkill;
+	}
 
 	return err;
 
+error_rfkill:
+	if (has_cap(ACER_CAP_BRIGHTNESS))
+		acer_backlight_exit();
 error_brightness:
-	acer_led_exit();
+	if (has_cap(ACER_CAP_MAILLED))
+		acer_led_exit();
 error_mailled:
 	return err;
 }
@@ -1132,8 +1173,8 @@ static int acer_platform_remove(struct platform_device *device)
 		acer_led_exit();
 	if (has_cap(ACER_CAP_BRIGHTNESS))
 		acer_backlight_exit();
-
-	acer_rfkill_exit();
+	if (has_cap(ACER_CAP_SWRFKILL))
+		acer_rfkill_exit();
 	return 0;
 }
 
