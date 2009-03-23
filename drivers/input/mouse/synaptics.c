@@ -71,7 +71,7 @@ int synaptics_detect(struct psmouse *psmouse, int set_properties)
 	unsigned char param[4];
 
 	if (synaptics_resume_reset) {
-		printk(KERN_CRIT "WARNING: synaptics was reset on resume, see synaptics_resume_reset if you have trouble on resume\n");
+		printk(KERN_INFO "synaptics was reset on resume, see synaptics_resume_reset if you have trouble on resume\n");
 		psmouse_reset(psmouse);
 	}
 
