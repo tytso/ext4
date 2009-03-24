@@ -2,6 +2,7 @@ config SECURITY_APPARMOR
 	bool "AppArmor support"
 	depends on SECURITY
 	select AUDIT
+	select SECURITYFS
 	help
 	  This enables the AppArmor security module.
 	  Required userspace tools (if they are not included in your
