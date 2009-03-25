@@ -133,7 +133,6 @@ async_xor
 at1700
 at24
 at25
-at76_usb
 ata_generic
 ata_piix
 aten
