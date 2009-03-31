@@ -32,7 +32,6 @@ cls_tcindex
 cls_u32
 compcache
 configfs
-cramfs
 crc16
 crc32c
 crc-itu-t
