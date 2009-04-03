@@ -2945,6 +2945,7 @@ EXPORT_SYMBOL_GPL vmlinux 0x1736cb0c	ata_sg_init
 EXPORT_SYMBOL_GPL vmlinux 0x17433679	inotify_init_watch
 EXPORT_SYMBOL_GPL vmlinux 0x17b8d73e	sysdev_show_int
 EXPORT_SYMBOL_GPL vmlinux 0x17ce645d	locks_end_grace
+EXPORT_SYMBOL_GPL vmlinux 0x186e09c9	securityfs_create_file
 EXPORT_SYMBOL_GPL vmlinux 0x1916dcc0	key_type_user
 EXPORT_SYMBOL_GPL vmlinux 0x191b433b	ata_do_set_mode
 EXPORT_SYMBOL_GPL vmlinux 0x191fb096	srcu_notifier_call_chain
@@ -2986,6 +2987,7 @@ EXPORT_SYMBOL_GPL vmlinux 0x20cd788f	__ftrace_printk
 EXPORT_SYMBOL_GPL vmlinux 0x20d6b777	tty_ldisc_flush
 EXPORT_SYMBOL_GPL vmlinux 0x21092b43	ata_sff_exec_command
 EXPORT_SYMBOL_GPL vmlinux 0x21b4330f	tty_wakeup
+EXPORT_SYMBOL_GPL vmlinux 0x222f1cd4	securityfs_create_dir
 EXPORT_SYMBOL_GPL vmlinux 0x22472bf4	xfrm_calg_get_byid
 EXPORT_SYMBOL_GPL vmlinux 0x226e1055	platform_device_add_resources
 EXPORT_SYMBOL_GPL vmlinux 0x22e2c20b	atomic_notifier_chain_unregister
@@ -3349,6 +3351,7 @@ EXPORT_SYMBOL_GPL vmlinux 0x67f7dbd5	invalidate_inode_pages2
 EXPORT_SYMBOL_GPL vmlinux 0x68644fae	vfs_cancel_lock
 EXPORT_SYMBOL_GPL vmlinux 0x686c703f	xfrm_count_auth_supported
 EXPORT_SYMBOL_GPL vmlinux 0x68cf6069	ide_port_scan
+EXPORT_SYMBOL_GPL vmlinux 0x693b711b	securityfs_remove
 EXPORT_SYMBOL_GPL vmlinux 0x69450a72	hid_input_report
 EXPORT_SYMBOL_GPL vmlinux 0x695a903b	blk_queue_rq_timed_out
 EXPORT_SYMBOL_GPL vmlinux 0x69918bc7	inotify_find_watch

@@ -3123,6 +3123,7 @@ EXPORT_SYMBOL_GPL vmlinux 0x59ca3224	inet_twdr_twkill_work
 EXPORT_SYMBOL_GPL vmlinux 0x5a4744b9	tcp_set_state
 EXPORT_SYMBOL_GPL vmlinux 0x5a7bfe41	crypto_probing_notify
 EXPORT_SYMBOL_GPL vmlinux 0x5a973a79	sdio_memcpy_toio
+EXPORT_SYMBOL_GPL vmlinux 0x5b0e431c	securityfs_create_dir
 EXPORT_SYMBOL_GPL vmlinux 0x5b3a94cf	tcp_slow_start
 EXPORT_SYMBOL_GPL vmlinux 0x5bcaf1e3	scsi_execute_async
 EXPORT_SYMBOL_GPL vmlinux 0x5bd26000	rpc_proc_unregister
@@ -3495,6 +3496,7 @@ EXPORT_SYMBOL_GPL vmlinux 0xb9e573b2	sk_clone
 EXPORT_SYMBOL_GPL vmlinux 0xb9eb3aa9	add_uevent_var
 EXPORT_SYMBOL_GPL vmlinux 0xba04b3c9	ata_host_detach
 EXPORT_SYMBOL_GPL vmlinux 0xba96d571	sata_scr_write
+EXPORT_SYMBOL_GPL vmlinux 0xbaeb5db6	securityfs_remove
 EXPORT_SYMBOL_GPL vmlinux 0xbaf09ec0	klist_del
 EXPORT_SYMBOL_GPL vmlinux 0xbb0e4490	get_task_mm
 EXPORT_SYMBOL_GPL vmlinux 0xbb29cb59	input_ff_event
@@ -3679,6 +3681,7 @@ EXPORT_SYMBOL_GPL vmlinux 0xf3d5cc13	ata_timing_merge
 EXPORT_SYMBOL_GPL vmlinux 0xf43041a4	inet_hash_connect
 EXPORT_SYMBOL_GPL vmlinux 0xf499fdb2	rcu_barrier_bh
 EXPORT_SYMBOL_GPL vmlinux 0xf4b01ed9	ata_eh_qc_retry
+EXPORT_SYMBOL_GPL vmlinux 0xf4e012d9	securityfs_create_file
 EXPORT_SYMBOL_GPL vmlinux 0xf53cfe2b	klist_node_attached
 EXPORT_SYMBOL_GPL vmlinux 0xf578f729	scsi_internal_device_unblock
 EXPORT_SYMBOL_GPL vmlinux 0xf591b3da	inotify_destroy

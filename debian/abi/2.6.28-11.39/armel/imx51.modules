@@ -175,6 +175,7 @@ dvb-usb-vp702x
 dvb-usb-vp7045
 ecb
 ecryptfs
+eeprom_93cx6
 em28xx
 em28xx-alsa
 em28xx-dvb
@@ -542,6 +543,7 @@ rt2x00lib
 rt2x00usb
 rt73usb
 rtl8150
+rtl8187
 rxkad
 s2255drv
 s5h1409

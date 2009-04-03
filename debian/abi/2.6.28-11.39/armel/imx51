@@ -3902,6 +3902,8 @@ EXPORT_SYMBOL_GPL drivers/media/video/videobuf-core 0xfd921f7e	videobuf_iolock
 EXPORT_SYMBOL_GPL drivers/media/video/videobuf-vmalloc 0x3587f373	videobuf_to_vmalloc
 EXPORT_SYMBOL_GPL drivers/media/video/videobuf-vmalloc 0x46f09f01	videobuf_vmalloc_free
 EXPORT_SYMBOL_GPL drivers/media/video/videobuf-vmalloc 0x4df184a4	videobuf_queue_vmalloc_init
+EXPORT_SYMBOL_GPL drivers/misc/eeprom_93cx6 0x2df115d4	eeprom_93cx6_multiread
+EXPORT_SYMBOL_GPL drivers/misc/eeprom_93cx6 0x63d14d2f	eeprom_93cx6_read
 EXPORT_SYMBOL_GPL drivers/mtd/onenand/onenand 0xced6337c	onenand_scan
 EXPORT_SYMBOL_GPL drivers/mtd/onenand/onenand 0xdaab80e9	onenand_release
 EXPORT_SYMBOL_GPL drivers/mtd/ubi/ubi 0x1179182d	ubi_leb_unmap
@@ -4433,6 +4435,7 @@ EXPORT_SYMBOL_GPL vmlinux 0x0531dcb8	ata_dev_classify
 EXPORT_SYMBOL_GPL vmlinux 0x0533054f	inet_csk_clone
 EXPORT_SYMBOL_GPL vmlinux 0x0548560a	ata_port_desc
 EXPORT_SYMBOL_GPL vmlinux 0x054e550b	kernel_halt
+EXPORT_SYMBOL_GPL vmlinux 0x056c3e0f	securityfs_create_file
 EXPORT_SYMBOL_GPL vmlinux 0x059c2395	__get_vm_area
 EXPORT_SYMBOL_GPL vmlinux 0x06178a52	register_pernet_gen_device
 EXPORT_SYMBOL_GPL vmlinux 0x061c9967	devm_kzalloc
@@ -4614,6 +4617,7 @@ EXPORT_SYMBOL_GPL vmlinux 0x2b9f8e23	nf_net_ipv4_netfilter_sysctl_path
 EXPORT_SYMBOL_GPL vmlinux 0x2c16ed76	xfrm_calg_get_byname
 EXPORT_SYMBOL_GPL vmlinux 0x2c208607	power_supply_is_system_supplied
 EXPORT_SYMBOL_GPL vmlinux 0x2c4ef669	snd_soc_set_runtime_hwparams
+EXPORT_SYMBOL_GPL vmlinux 0x2c84ac6f	securityfs_remove
 EXPORT_SYMBOL_GPL vmlinux 0x2ce62475	snd_soc_update_bits
 EXPORT_SYMBOL_GPL vmlinux 0x2cfdf9e6	register_pernet_gen_subsys
 EXPORT_SYMBOL_GPL vmlinux 0x2d69b659	ata_sff_freeze
@@ -5256,6 +5260,7 @@ EXPORT_SYMBOL_GPL vmlinux 0xb242838c	nand_release
 EXPORT_SYMBOL_GPL vmlinux 0xb27005f5	device_suspend
 EXPORT_SYMBOL_GPL vmlinux 0xb2f1a4f0	invalidate_inode_pages2_range
 EXPORT_SYMBOL_GPL vmlinux 0xb2f90dc5	snd_soc_new_pcms
+EXPORT_SYMBOL_GPL vmlinux 0xb36393a2	securityfs_create_dir
 EXPORT_SYMBOL_GPL vmlinux 0xb3a2a394	debugfs_create_u32
 EXPORT_SYMBOL_GPL vmlinux 0xb3e65719	__inet_hash_nolisten
 EXPORT_SYMBOL_GPL vmlinux 0xb4188c8e	inotify_remove_watch_locked
