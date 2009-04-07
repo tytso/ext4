@@ -122,8 +122,6 @@ typedef struct drm_i915_private {
 	drm_local_map_t hws_map;
 	struct drm_gem_object *hws_obj;
 
-	struct resource mch_res;
-
 	unsigned int cpp;
 	int back_offset;
 	int front_offset;
