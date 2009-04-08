@@ -991,32 +991,6 @@ static int ieee80211_change_bss(struct wiphy *wiphy,
 	return 0;
 }
 
-#ifdef CONFIG_PM
-static int ieee80211_suspend(struct wiphy *wiphy)
-{
-	return 0;
-}
-
-static int ieee80211_resume(struct wiphy *wiphy)
-{
-	struct ieee80211_local *local = wiphy_priv(wiphy);
-	unsigned long age_jiffies;
-	struct ieee80211_bss *bss;
-
-	age_jiffies = msecs_to_jiffies(wiphy->suspend_duration * MSEC_PER_SEC);
-	spin_lock_bh(&local->bss_lock);
-	list_for_each_entry(bss, &local->bss_list, list) {
-		bss->last_update -= age_jiffies;
-	}
-	spin_unlock_bh(&local->bss_lock);
-
-	return 0;
-}
-#else
-#define ieee80211_suspend NULL
-#define ieee80211_resume NULL
-#endif
-
 struct cfg80211_ops mac80211_config_ops = {
 	.add_virtual_intf = ieee80211_add_iface,
 	.del_virtual_intf = ieee80211_del_iface,
@@ -1041,6 +1015,4 @@ struct cfg80211_ops mac80211_config_ops = {
 	.dump_mpath = ieee80211_dump_mpath,
 #endif
 	.change_bss = ieee80211_change_bss,
-	.suspend = ieee80211_suspend,
-	.resume = ieee80211_resume,
 };

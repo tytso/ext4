@@ -749,15 +749,6 @@ static void ieee80211_scan_add_ies(struct iw_request_info *info,
 	}
 }
 
-static inline unsigned int elapsed_jiffies_msecs(unsigned long start)
-{
-	unsigned long end = jiffies;
-
-	if (end >= start)
-		return jiffies_to_msecs(end - start);
-
-	return jiffies_to_msecs(end + (MAX_JIFFY_OFFSET - start) + 1);
-}
 
 static char *
 ieee80211_scan_result(struct ieee80211_local *local,
@@ -870,8 +861,8 @@ ieee80211_scan_result(struct ieee80211_local *local,
 						  &iwe, buf);
 		memset(&iwe, 0, sizeof(iwe));
 		iwe.cmd = IWEVCUSTOM;
-		sprintf(buf, " Last beacon: %ums ago",
-			elapsed_jiffies_msecs(bss->last_update));
+		sprintf(buf, " Last beacon: %dms ago",
+			jiffies_to_msecs(jiffies - bss->last_update));
 		iwe.u.data.length = strlen(buf);
 		current_ev = iwe_stream_add_point(info, current_ev,
 						  end_buf, &iwe, buf);

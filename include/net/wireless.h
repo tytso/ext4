@@ -212,9 +212,6 @@ struct wiphy {
 	/* dir in debugfs: ieee80211/<wiphyname> */
 	struct dentry *debugfsdir;
 
-	/* time spent in suspend, in seconds */
-	unsigned long suspend_duration;
-
 	char priv[0] __attribute__((__aligned__(NETDEV_ALIGN)));
 };
 

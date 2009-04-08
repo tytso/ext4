@@ -363,9 +363,6 @@ struct wiphy;
  * wireless extensions but this is subject to reevaluation as soon as this
  * code is used more widely and we have a first user without wext.
  *
- * @suspend: wiphy device needs to be suspended
- * @resume: wiphy device needs to be resumed
- *
  * @add_virtual_intf: create a new virtual interface with the given name,
  *	must set the struct wireless_dev's iftype.
  *
@@ -405,9 +402,6 @@ struct wiphy;
  * @change_bss: Modify parameters for a given BSS.
  */
 struct cfg80211_ops {
-	int	(*suspend)(struct wiphy *wiphy);
-	int	(*resume)(struct wiphy *wiphy);
-
 	int	(*add_virtual_intf)(struct wiphy *wiphy, char *name,
 				    enum nl80211_iftype type, u32 *flags,
 				    struct vif_params *params);
