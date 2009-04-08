@@ -131,7 +131,7 @@ Pre-Depends: dpkg (>= 1.10.24)
 Provides: linux-image, linux-image-2.6, fuse-module, 
 Depends: initramfs-tools (>= 0.36ubuntu6), coreutils | fileutils (>= 4.0), module-init-tools (>= 3.3-pre11-4ubuntu3), wireless-crda
 Conflicts: hotplug (<< 0.0.20040105-1)
-Recommends: 
+Recommends: flash-kernel
 Suggests: fdutils, linux-doc-2.6.28 | linux-source-2.6.28
 Description: Linux kernel image for version 2.6.28 on I.MX51-based systems
  This package contains the Linux kernel image for version 2.6.28 on
@@ -185,7 +185,7 @@ Pre-Depends: dpkg (>= 1.10.24)
 Provides: linux-image, linux-image-2.6, fuse-module, 
 Depends: initramfs-tools (>= 0.36ubuntu6), coreutils | fileutils (>= 4.0), module-init-tools (>= 3.3-pre11-4ubuntu3), wireless-crda
 Conflicts: hotplug (<< 0.0.20040105-1)
-Recommends: 
+Recommends: flash-kernel
 Suggests: fdutils, linux-doc-2.6.28 | linux-source-2.6.28
 Description: Linux kernel image for version 2.6.28 on IOP32x-based systems
  This package contains the Linux kernel image for version 2.6.28 on
@@ -239,7 +239,7 @@ Pre-Depends: dpkg (>= 1.10.24)
 Provides: linux-image, linux-image-2.6, fuse-module, 
 Depends: initramfs-tools (>= 0.36ubuntu6), coreutils | fileutils (>= 4.0), module-init-tools (>= 3.3-pre11-4ubuntu3), wireless-crda
 Conflicts: hotplug (<< 0.0.20040105-1)
-Recommends: 
+Recommends: flash-kernel
 Suggests: fdutils, linux-doc-2.6.28 | linux-source-2.6.28
 Description: Linux kernel image for version 2.6.28 on IXP4xx-based systems
  This package contains the Linux kernel image for version 2.6.28 on
