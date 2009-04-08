@@ -60,6 +60,39 @@ static int wiphy_uevent(struct device *dev, struct kobj_uevent_env *env)
 }
 #endif
 
+static int wiphy_suspend(struct device *dev, pm_message_t state)
+{
+	struct cfg80211_registered_device *rdev = dev_to_rdev(dev);
+	int ret = 0;
+
+	rdev->wiphy.suspend_duration = 0;
+	rdev->suspend_at = get_seconds();
+
+	if (rdev->ops->suspend) {
+		rtnl_lock();
+		ret = rdev->ops->suspend(&rdev->wiphy);
+		rtnl_unlock();
+	}
+
+	return ret;
+}
+
+static int wiphy_resume(struct device *dev)
+{
+	struct cfg80211_registered_device *rdev = dev_to_rdev(dev);
+	int ret = 0;
+
+	rdev->wiphy.suspend_duration = get_seconds() - rdev->suspend_at;
+
+	if (rdev->ops->resume) {
+		rtnl_lock();
+		ret = rdev->ops->resume(&rdev->wiphy);
+		rtnl_unlock();
+	}
+
+	return ret;
+}
+
 struct class ieee80211_class = {
 	.name = "ieee80211",
 	.owner = THIS_MODULE,
@@ -68,6 +101,8 @@ struct class ieee80211_class = {
 #ifdef CONFIG_HOTPLUG
 	.dev_uevent = wiphy_uevent,
 #endif
+	.suspend = wiphy_suspend,
+	.resume = wiphy_resume,
 };
 
 int wiphy_sysfs_init(void)

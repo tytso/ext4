@@ -28,6 +28,8 @@ struct cfg80211_registered_device {
 	struct mutex devlist_mtx;
 	struct list_head netdev_list;
 
+	unsigned long suspend_at;
+
 	/* must be last because of the way we do wiphy_priv(),
 	 * and it should at least be aligned to NETDEV_ALIGN */
 	struct wiphy wiphy __attribute__((__aligned__(NETDEV_ALIGN)));
