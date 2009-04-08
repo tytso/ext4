@@ -1126,6 +1126,7 @@ EXPORT_SYMBOL vmlinux 0x12dd0e91	generic_file_splice_write
 EXPORT_SYMBOL vmlinux 0x12ee5607	pci_save_state
 EXPORT_SYMBOL vmlinux 0x1308eb53	pcix_get_mmrbc
 EXPORT_SYMBOL vmlinux 0x13266092	put_io_context
+EXPORT_SYMBOL vmlinux 0x132f45f2	cookie_check_timestamp
 EXPORT_SYMBOL vmlinux 0x133a60ec	scsi_rescan_device
 EXPORT_SYMBOL vmlinux 0x13837d11	clear_bdi_congested
 EXPORT_SYMBOL vmlinux 0x13c1485e	__bread
@@ -2297,6 +2298,7 @@ EXPORT_SYMBOL vmlinux 0x94c01ed4	skb_copy_datagram_from_iovec
 EXPORT_SYMBOL vmlinux 0x94e9ce6d	directly_mappable_cdev_bdi
 EXPORT_SYMBOL vmlinux 0x94f04834	sock_no_mmap
 EXPORT_SYMBOL vmlinux 0x9501d078	__wait_on_bit_lock
+EXPORT_SYMBOL vmlinux 0x954488a4	syncookie_secret
 EXPORT_SYMBOL vmlinux 0x954cbb26	vsprintf
 EXPORT_SYMBOL vmlinux 0x95896cf6	d_lookup
 EXPORT_SYMBOL vmlinux 0x95a7ef50	make_EII_client

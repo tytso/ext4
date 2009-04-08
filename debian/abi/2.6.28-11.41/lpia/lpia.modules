@@ -1095,6 +1095,7 @@ nfs
 nfs_acl
 nfsd
 nftl
+nf_tproxy_core
 n_hdlc
 ni52
 ni65
@@ -1966,9 +1967,11 @@ xt_quota
 xt_rateest
 xt_RATEEST
 xt_realm
+xt_recent
 xts
 xt_sctp
 xt_SECMARK
+xt_socket
 xt_state
 xt_statistic
 xt_string
@@ -1976,6 +1979,7 @@ xt_tcpmss
 xt_TCPMSS
 xt_tcpudp
 xt_time
+xt_TPROXY
 xt_TRACE
 xt_u32
 yealink
