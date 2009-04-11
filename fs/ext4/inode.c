@@ -2797,6 +2797,16 @@ static int ext4_da_write_end(struct file *file,
 	}
 
 	trace_ext4_da_write_end(inode, pos, len, copied);
+
+	if (test_opt(inode->i_sb, DATA_FLAGS) ==
+	    EXT4_MOUNT_ALLOC_COMMIT_DATA) {
+		ret = ext4_jbd2_file_inode(handle, inode);
+		if (ret)
+			goto errout;
+		ret = ext4_mark_inode_dirty(handle, inode);
+		if (ret)
+			goto errout;
+	}
 	start = pos & (PAGE_CACHE_SIZE - 1);
 	end = start + copied - 1;
 
@@ -2834,6 +2844,7 @@ static int ext4_da_write_end(struct file *file,
 	copied = ret2;
 	if (ret2 < 0)
 		ret = ret2;
+errout:
 	ret2 = ext4_journal_stop(handle);
 	if (!ret)
 		ret = ret2;

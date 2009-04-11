@@ -388,6 +388,9 @@ void jbd2_journal_commit_transaction(journal_t *journal)
 	spin_unlock(&journal->j_list_lock);
 #endif
 
+	if (journal->j_pre_commit_callback)
+		journal->j_pre_commit_callback(journal);
+
 	/* Do we need to erase the effects of a prior jbd2_journal_flush? */
 	if (journal->j_flags & JBD2_FLUSHED) {
 		jbd_debug(3, "super block updated\n");

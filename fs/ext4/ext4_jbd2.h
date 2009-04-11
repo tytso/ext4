@@ -274,7 +274,8 @@ static inline int ext4_should_order_data(struct inode *inode)
 		return 0;
 	if (EXT4_I(inode)->i_flags & EXT4_JOURNAL_DATA_FL)
 		return 0;
-	if (test_opt(inode->i_sb, DATA_FLAGS) == EXT4_MOUNT_ORDERED_DATA)
+	if ((test_opt(inode->i_sb, DATA_FLAGS) == EXT4_MOUNT_ORDERED_DATA) ||
+	    (test_opt(inode->i_sb, DATA_FLAGS) == EXT4_MOUNT_ALLOC_COMMIT_DATA))
 		return 1;
 	return 0;
 }

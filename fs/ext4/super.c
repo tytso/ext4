@@ -70,7 +70,7 @@ static int ext4_statfs(struct dentry *dentry, struct kstatfs *buf);
 static int ext4_unfreeze(struct super_block *sb);
 static void ext4_write_super(struct super_block *sb);
 static int ext4_freeze(struct super_block *sb);
-
+static void alloc_on_commit_callback(journal_t *journal);
 
 ext4_fsblk_t ext4_block_bitmap(struct super_block *sb,
 			       struct ext4_group_desc *bg)
@@ -864,6 +864,8 @@ static int ext4_show_options(struct seq_file *seq, struct vfsmount *vfs)
 		seq_puts(seq, ",data=ordered");
 	else if (test_opt(sb, DATA_FLAGS) == EXT4_MOUNT_WRITEBACK_DATA)
 		seq_puts(seq, ",data=writeback");
+	else if (test_opt(sb, DATA_FLAGS) == EXT4_MOUNT_ALLOC_COMMIT_DATA)
+		seq_puts(seq, ",data=alloc_on_commit");
 
 	if (sbi->s_inode_readahead_blks != EXT4_DEF_INODE_READAHEAD_BLKS)
 		seq_printf(seq, ",inode_readahead_blks=%u",
@@ -1029,7 +1031,7 @@ enum {
 	Opt_journal_update, Opt_journal_dev,
 	Opt_journal_checksum, Opt_journal_async_commit,
 	Opt_abort, Opt_data_journal, Opt_data_ordered, Opt_data_writeback,
-	Opt_data_err_abort, Opt_data_err_ignore,
+	Opt_data_alloc_on_commit, Opt_data_err_abort, Opt_data_err_ignore,
 	Opt_usrjquota, Opt_grpjquota, Opt_offusrjquota, Opt_offgrpjquota,
 	Opt_jqfmt_vfsold, Opt_jqfmt_vfsv0, Opt_quota, Opt_noquota,
 	Opt_ignore, Opt_barrier, Opt_nobarrier, Opt_err, Opt_resize,
@@ -1073,6 +1075,7 @@ static const match_table_t tokens = {
 	{Opt_data_journal, "data=journal"},
 	{Opt_data_ordered, "data=ordered"},
 	{Opt_data_writeback, "data=writeback"},
+	{Opt_data_alloc_on_commit, "data=alloc_on_commit"},
 	{Opt_data_err_abort, "data_err=abort"},
 	{Opt_data_err_ignore, "data_err=ignore"},
 	{Opt_offusrjquota, "usrjquota="},
@@ -1293,6 +1296,9 @@ static int parse_options(char *options, struct super_block *sb,
 			goto datacheck;
 		case Opt_data_ordered:
 			data_opt = EXT4_MOUNT_ORDERED_DATA;
+			goto datacheck;
+		case Opt_data_alloc_on_commit:
+			data_opt = EXT4_MOUNT_ALLOC_COMMIT_DATA;
 			goto datacheck;
 		case Opt_data_writeback:
 			data_opt = EXT4_MOUNT_WRITEBACK_DATA;
@@ -1889,6 +1895,26 @@ static void ext4_orphan_cleanup(struct super_block *sb,
 #endif
 	sb->s_flags = s_flags; /* Restore MS_RDONLY status */
 }
+
+/*
+ * This callback is called before each commit when we are using
+ * alloc-on-commit mode.
+ */
+static void alloc_on_commit_callback(journal_t *journal)
+{
+	struct jbd2_inode *jinode, *next_i;
+	transaction_t *transaction = journal->j_running_transaction;
+
+	spin_lock(&journal->j_list_lock);
+	list_for_each_entry_safe(jinode, next_i,
+				 &transaction->t_inode_list, i_list) {
+		spin_unlock(&journal->j_list_lock);
+		ext4_alloc_da_blocks(jinode->i_vfs_inode);
+		spin_lock(&journal->j_list_lock);
+	}
+	spin_unlock(&journal->j_list_lock);
+}
+
 /*
  * Maximal extent format file size.
  * Resulting logical blkno at s_maxbytes must fit in our on-disk
@@ -2319,6 +2345,9 @@ static int ext4_fill_super(struct super_block *sb, void *data, int silent)
 		sbi->s_mount_opt |= EXT4_MOUNT_ORDERED_DATA;
 	else if ((def_mount_opts & EXT4_DEFM_JMODE) == EXT4_DEFM_JMODE_WBACK)
 		sbi->s_mount_opt |= EXT4_MOUNT_WRITEBACK_DATA;
+	else if ((def_mount_opts & EXT4_DEFM_JMODE) ==
+		 EXT4_DEFM_JMODE_ALLOC_COMMIT)
+		sbi->s_mount_opt |= EXT4_MOUNT_ALLOC_COMMIT_DATA;
 
 	if (le16_to_cpu(sbi->s_es->s_errors) == EXT4_ERRORS_PANIC)
 		set_opt(sbi->s_mount_opt, ERRORS_PANIC);
@@ -2701,18 +2730,9 @@ static int ext4_fill_super(struct super_block *sb, void *data, int silent)
 	/* We have now updated the journal if required, so we can
 	 * validate the data journaling mode. */
 	switch (test_opt(sb, DATA_FLAGS)) {
-	case 0:
-		/* No mode set, assume a default based on the journal
-		 * capabilities: ORDERED_DATA if the journal can
-		 * cope, else JOURNAL_DATA
-		 */
-		if (jbd2_journal_check_available_features
-		    (sbi->s_journal, 0, 0, JBD2_FEATURE_INCOMPAT_REVOKE))
-			set_opt(sbi->s_mount_opt, ORDERED_DATA);
-		else
-			set_opt(sbi->s_mount_opt, JOURNAL_DATA);
-		break;
-
+	case EXT4_MOUNT_ALLOC_COMMIT_DATA:
+		sbi->s_journal->j_pre_commit_callback =
+			alloc_on_commit_callback;
 	case EXT4_MOUNT_ORDERED_DATA:
 	case EXT4_MOUNT_WRITEBACK_DATA:
 		if (!jbd2_journal_check_available_features
@@ -2823,6 +2843,9 @@ no_journal:
 			descr = " journalled data mode";
 		else if (test_opt(sb, DATA_FLAGS) == EXT4_MOUNT_ORDERED_DATA)
 			descr = " ordered data mode";
+		else if (test_opt(sb, DATA_FLAGS) ==
+			 EXT4_MOUNT_ALLOC_COMMIT_DATA)
+			descr = " alloc on commit data mode";
 		else
 			descr = " writeback data mode";
 	} else

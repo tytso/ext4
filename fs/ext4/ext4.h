@@ -542,8 +542,9 @@ do {									       \
 #define EXT4_MOUNT_NOLOAD		0x00100	/* Don't use existing journal*/
 #define EXT4_MOUNT_ABORT		0x00200	/* Fatal error detected */
 #define EXT4_MOUNT_DATA_FLAGS		0x00C00	/* Mode for data writes: */
+#define EXT4_MOUNT_ORDERED_DATA		0x00000	/* Flush data before commit */
 #define EXT4_MOUNT_JOURNAL_DATA		0x00400	/* Write data to journal */
-#define EXT4_MOUNT_ORDERED_DATA		0x00800	/* Flush data before commit */
+#define EXT4_MOUNT_ALLOC_COMMIT_DATA	0x00800	/* Alloc data on commit */
 #define EXT4_MOUNT_WRITEBACK_DATA	0x00C00	/* No data ordering */
 #define EXT4_MOUNT_UPDATE_JOURNAL	0x01000	/* Update the journal format */
 #define EXT4_MOUNT_NO_UID32		0x02000  /* Disable 32-bit UIDs */
@@ -821,10 +822,11 @@ static inline int ext4_valid_inum(struct super_block *sb, unsigned long ino)
 #define EXT4_DEFM_XATTR_USER	0x0004
 #define EXT4_DEFM_ACL		0x0008
 #define EXT4_DEFM_UID16		0x0010
-#define EXT4_DEFM_JMODE		0x0060
+#define EXT4_DEFM_JMODE		0x00E0
 #define EXT4_DEFM_JMODE_DATA	0x0020
 #define EXT4_DEFM_JMODE_ORDERED	0x0040
 #define EXT4_DEFM_JMODE_WBACK	0x0060
+#define EXT4_DEFM_JMODE_ALLOC_COMMIT	0x00C0
 
 /*
  * Default journal batch times

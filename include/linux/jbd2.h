@@ -981,6 +981,8 @@ struct journal_s
 	u32			j_min_batch_time;
 	u32			j_max_batch_time;
 
+	/* This function is called before a transaction is closed */
+	void			(*j_pre_commit_callback)(journal_t *);
 	/* This function is called when a transaction is closed */
 	void			(*j_commit_callback)(journal_t *,
 						     transaction_t *);
