@@ -306,6 +306,9 @@ struct azx_dev {
 	unsigned int period_bytes; /* size of the period in bytes */
 	unsigned int frags;	/* number for period in the play buffer */
 	unsigned int fifo_size;	/* FIFO size */
+	unsigned int start_flag: 1;	/* stream full start flag */
+	unsigned long start_jiffies;	/* start + minimum jiffies */
+	unsigned long min_jiffies;	/* minimum jiffies before position is valid */
 
 	void __iomem *sd_addr;	/* stream descriptor pointer */
 
@@ -324,7 +327,6 @@ struct azx_dev {
 	unsigned int opened :1;
 	unsigned int running :1;
 	unsigned int irq_pending :1;
-	unsigned int irq_ignore :1;
 	/*
 	 * For VIA:
 	 *  A flag to ensure DMA position is 0
@@ -852,13 +854,18 @@ static void azx_stream_start(struct azx *chip, struct azx_dev *azx_dev)
 		      SD_CTL_DMA_START | SD_INT_MASK);
 }
 
-/* stop a stream */
-static void azx_stream_stop(struct azx *chip, struct azx_dev *azx_dev)
+/* stop DMA */
+static void azx_stream_clear(struct azx *chip, struct azx_dev *azx_dev)
 {
-	/* stop DMA */
 	azx_sd_writeb(azx_dev, SD_CTL, azx_sd_readb(azx_dev, SD_CTL) &
 		      ~(SD_CTL_DMA_START | SD_INT_MASK));
 	azx_sd_writeb(azx_dev, SD_STS, SD_INT_MASK); /* to be sure */
+}
+
+/* stop a stream */
+static void azx_stream_stop(struct azx *chip, struct azx_dev *azx_dev)
+{
+	azx_stream_clear(chip, azx_dev);
 	/* disable SIE */
 	azx_writeb(chip, INTCTL,
 		   azx_readb(chip, INTCTL) & ~(1 << azx_dev->index));
@@ -963,7 +970,7 @@ static irqreturn_t azx_interrupt(int irq, void *dev_id)
 	struct azx *chip = dev_id;
 	struct azx_dev *azx_dev;
 	u32 status;
-	int i;
+	int i, ok;
 
 	spin_lock(&chip->reg_lock);
 
@@ -979,18 +986,14 @@ static irqreturn_t azx_interrupt(int irq, void *dev_id)
 			azx_sd_writeb(azx_dev, SD_STS, SD_INT_MASK);
 			if (!azx_dev->substream || !azx_dev->running)
 				continue;
-			/* ignore the first dummy IRQ (due to pos_adj) */
-			if (azx_dev->irq_ignore) {
-				azx_dev->irq_ignore = 0;
-				continue;
-			}
 			/* check whether this IRQ is really acceptable */
-			if (azx_position_ok(chip, azx_dev)) {
+			ok = azx_position_ok(chip, azx_dev);
+			if (ok == 1) {
 				azx_dev->irq_pending = 0;
 				spin_unlock(&chip->reg_lock);
 				snd_pcm_period_elapsed(azx_dev->substream);
 				spin_lock(&chip->reg_lock);
-			} else {
+			} else if (ok == 0) {
 				/* bogus IRQ, process it later */
 				azx_dev->irq_pending = 1;
 				schedule_work(&chip->irq_pending_work);
@@ -1068,15 +1071,13 @@ static int azx_setup_periods(struct azx *chip,
 	azx_sd_writel(azx_dev, SD_BDLPL, 0);
 	azx_sd_writel(azx_dev, SD_BDLPU, 0);
 
-	period_bytes = snd_pcm_lib_period_bytes(substream);
-	azx_dev->period_bytes = period_bytes;
+	period_bytes = azx_dev->period_bytes;
 	periods = azx_dev->bufsize / period_bytes;
 
 	/* program the initial BDL entries */
 	bdl = (u32 *)azx_dev->bdl.area;
 	ofs = 0;
 	azx_dev->frags = 0;
-	azx_dev->irq_ignore = 0;
 	pos_adj = bdl_pos_adj[chip->dev_index];
 	if (pos_adj > 0) {
 		struct snd_pcm_runtime *runtime = substream->runtime;
@@ -1097,7 +1098,6 @@ static int azx_setup_periods(struct azx *chip,
 					 &bdl, ofs, pos_adj, 1);
 			if (ofs < 0)
 				goto error;
-			azx_dev->irq_ignore = 1;
 		}
 	} else
 		pos_adj = 0;
@@ -1116,24 +1116,17 @@ static int azx_setup_periods(struct azx *chip,
  error:
 	snd_printk(KERN_ERR "Too many BDL entries: buffer=%d, period=%d\n",
 		   azx_dev->bufsize, period_bytes);
-	/* reset */
-	azx_sd_writel(azx_dev, SD_BDLPL, 0);
-	azx_sd_writel(azx_dev, SD_BDLPU, 0);
 	return -EINVAL;
 }
 
-/*
- * set up the SD for streaming
- */
-static int azx_setup_controller(struct azx *chip, struct azx_dev *azx_dev)
+/* reset stream */
+static void azx_stream_reset(struct azx *chip, struct azx_dev *azx_dev)
 {
 	unsigned char val;
 	int timeout;
 
-	/* make sure the run bit is zero for SD */
-	azx_sd_writeb(azx_dev, SD_CTL, azx_sd_readb(azx_dev, SD_CTL) &
-		      ~SD_CTL_DMA_START);
-	/* reset stream */
+	azx_stream_clear(chip, azx_dev);
+
 	azx_sd_writeb(azx_dev, SD_CTL, azx_sd_readb(azx_dev, SD_CTL) |
 		      SD_CTL_STREAM_RESET);
 	udelay(3);
@@ -1151,6 +1144,17 @@ static int azx_setup_controller(struct azx *chip, struct azx_dev *azx_dev)
 	       --timeout)
 		;
 
+	/* reset first position - may not be synced with hw at this time */
+	*azx_dev->posbuf = 0;
+}
+
+/*
+ * set up the SD for streaming
+ */
+static int azx_setup_controller(struct azx *chip, struct azx_dev *azx_dev)
+{
+	/* make sure the run bit is zero for SD */
+	azx_stream_clear(chip, azx_dev);
 	/* program the stream_tag */
 	azx_sd_writel(azx_dev, SD_CTL,
 		      (azx_sd_readl(azx_dev, SD_CTL) & ~SD_CTL_STREAM_TAG_MASK)|
@@ -1370,6 +1374,7 @@ static int azx_pcm_open(struct snd_pcm_substream *substream)
 	runtime->private_data = azx_dev;
 	snd_pcm_set_sync(substream);
 	mutex_unlock(&chip->open_mutex);
+
 	return 0;
 }
 
@@ -1396,6 +1401,11 @@ static int azx_pcm_close(struct snd_pcm_substream *substream)
 static int azx_pcm_hw_params(struct snd_pcm_substream *substream,
 			     struct snd_pcm_hw_params *hw_params)
 {
+	struct azx_dev *azx_dev = get_azx_dev(substream);
+
+	azx_dev->bufsize = 0;
+	azx_dev->period_bytes = 0;
+	azx_dev->format_val = 0;
 	return snd_pcm_lib_malloc_pages(substream,
 					params_buffer_bytes(hw_params));
 }
@@ -1410,6 +1420,9 @@ static int azx_pcm_hw_free(struct snd_pcm_substream *substream)
 	azx_sd_writel(azx_dev, SD_BDLPL, 0);
 	azx_sd_writel(azx_dev, SD_BDLPU, 0);
 	azx_sd_writel(azx_dev, SD_CTL, 0);
+	azx_dev->bufsize = 0;
+	azx_dev->period_bytes = 0;
+	azx_dev->format_val = 0;
 
 	hinfo->ops.cleanup(hinfo, apcm->codec, substream);
 
@@ -1423,23 +1436,40 @@ static int azx_pcm_prepare(struct snd_pcm_substream *substream)
 	struct azx_dev *azx_dev = get_azx_dev(substream);
 	struct hda_pcm_stream *hinfo = apcm->hinfo[substream->stream];
 	struct snd_pcm_runtime *runtime = substream->runtime;
+	unsigned int bufsize, period_bytes, format_val;
+	int err;
 
-	azx_dev->bufsize = snd_pcm_lib_buffer_bytes(substream);
-	azx_dev->format_val = snd_hda_calc_stream_format(runtime->rate,
-							 runtime->channels,
-							 runtime->format,
-							 hinfo->maxbps);
-	if (!azx_dev->format_val) {
+	azx_stream_reset(chip, azx_dev);
+	format_val = snd_hda_calc_stream_format(runtime->rate,
+						runtime->channels,
+						runtime->format,
+						hinfo->maxbps);
+	if (!format_val) {
 		snd_printk(KERN_ERR SFX
 			   "invalid format_val, rate=%d, ch=%d, format=%d\n",
 			   runtime->rate, runtime->channels, runtime->format);
 		return -EINVAL;
 	}
 
+	bufsize = snd_pcm_lib_buffer_bytes(substream);
+	period_bytes = snd_pcm_lib_period_bytes(substream);
+
 	snd_printdd("azx_pcm_prepare: bufsize=0x%x, format=0x%x\n",
-		    azx_dev->bufsize, azx_dev->format_val);
-	if (azx_setup_periods(chip, substream, azx_dev) < 0)
-		return -EINVAL;
+		    bufsize, format_val);
+
+	if (bufsize != azx_dev->bufsize ||
+	    period_bytes != azx_dev->period_bytes ||
+	    format_val != azx_dev->format_val) {
+		azx_dev->bufsize = bufsize;
+		azx_dev->period_bytes = period_bytes;
+		azx_dev->format_val = format_val;
+		err = azx_setup_periods(chip, substream, azx_dev);
+		if (err < 0)
+			return err;
+	}
+
+	azx_dev->min_jiffies = (runtime->period_size * HZ) /
+						(runtime->rate * 2);
 	azx_setup_controller(chip, azx_dev);
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 		azx_dev->fifo_size = azx_sd_readw(azx_dev, SD_FIFOSIZE) + 1;
@@ -1456,13 +1486,14 @@ static int azx_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
 	struct azx *chip = apcm->chip;
 	struct azx_dev *azx_dev;
 	struct snd_pcm_substream *s;
-	int start, nsync = 0, sbits = 0;
+	int rstart = 0, start, nsync = 0, sbits = 0;
 	int nwait, timeout;
 
 	switch (cmd) {
+	case SNDRV_PCM_TRIGGER_START:
+		rstart = 1;
 	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
 	case SNDRV_PCM_TRIGGER_RESUME:
-	case SNDRV_PCM_TRIGGER_START:
 		start = 1;
 		break;
 	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
@@ -1492,6 +1523,10 @@ static int azx_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
 		if (s->pcm->card != substream->pcm->card)
 			continue;
 		azx_dev = get_azx_dev(s);
+		if (rstart) {
+			azx_dev->start_flag = 1;
+			azx_dev->start_jiffies = jiffies + azx_dev->min_jiffies;
+		}
 		if (start)
 			azx_stream_start(chip, azx_dev);
 		else
@@ -1640,6 +1675,11 @@ static snd_pcm_uframes_t azx_pcm_pointer(struct snd_pcm_substream *substream)
 static int azx_position_ok(struct azx *chip, struct azx_dev *azx_dev)
 {
 	unsigned int pos;
+
+	if (azx_dev->start_flag &&
+	    time_before_eq(jiffies, azx_dev->start_jiffies))
+		return -1;	/* bogus (too early) interrupt */
+	azx_dev->start_flag = 0;
 
 	pos = azx_get_position(chip, azx_dev);
 	if (chip->position_fix == POS_FIX_AUTO) {
