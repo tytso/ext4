@@ -75,7 +75,6 @@ aes_generic
 aes-i586
 affs
 af_key
-af_packet
 af-rxrpc
 agpgart
 ah4
