@@ -260,8 +260,8 @@ ip6t_ah
 ip6t_eui64
 ip6t_frag
 ip6t_hbh
-ip6t_hl
 ip6t_HL
+ip6t_hl
 ip6t_ipv6header
 ip6t_LOG
 ip6t_mh
@@ -288,15 +288,15 @@ iptable_security
 ipt_addrtype
 ipt_ah
 ipt_CLUSTERIP
-ipt_ecn
 ipt_ECN
+ipt_ecn
 ipt_LOG
 ipt_MASQUERADE
 ipt_NETMAP
 ipt_REDIRECT
 ipt_REJECT
-ipt_ttl
 ipt_TTL
+ipt_ttl
 ipt_ULOG
 ipu_prp_enc
 ipu_prp_vf_sdc
@@ -703,8 +703,8 @@ xt_CLASSIFY
 xt_comment
 xt_connbytes
 xt_connlimit
-xt_connmark
 xt_CONNMARK
+xt_connmark
 xt_CONNSECMARK
 xt_conntrack
 xt_dccp
@@ -716,8 +716,8 @@ xt_iprange
 xt_length
 xt_limit
 xt_mac
-xt_mark
 xt_MARK
+xt_mark
 xt_multiport
 xt_NFLOG
 xt_NFQUEUE
@@ -725,8 +725,8 @@ xt_owner
 xt_pkttype
 xt_policy
 xt_quota
-xt_rateest
 xt_RATEEST
+xt_rateest
 xt_realm
 xt_recent
 xts
@@ -735,8 +735,8 @@ xt_SECMARK
 xt_state
 xt_statistic
 xt_string
-xt_tcpmss
 xt_TCPMSS
+xt_tcpmss
 xt_tcpudp
 xt_time
 xt_u32
