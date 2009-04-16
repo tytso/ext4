@@ -6502,6 +6502,8 @@ EXPORT_SYMBOL_GPL net/netfilter/nf_conntrack_sip 0xd8362945	nf_nat_sdp_addr_hook
 EXPORT_SYMBOL_GPL net/netfilter/nf_conntrack_sip 0xf670db83	nf_nat_sip_expect_hook
 EXPORT_SYMBOL_GPL net/netfilter/nf_conntrack_sip 0xf8b610ea	ct_sip_get_header
 EXPORT_SYMBOL_GPL net/netfilter/nf_conntrack_tftp 0x5943f1e1	nf_nat_tftp_hook
+EXPORT_SYMBOL_GPL net/netfilter/nf_tproxy_core 0x326b5375	nf_tproxy_get_sock_v4
+EXPORT_SYMBOL_GPL net/netfilter/nf_tproxy_core 0xfcdd46f6	nf_tproxy_assign_sock
 EXPORT_SYMBOL_GPL net/netfilter/nfnetlink 0x1f58e71b	nfnl_lock
 EXPORT_SYMBOL_GPL net/netfilter/nfnetlink 0x3895cd7a	nfnl_unlock
 EXPORT_SYMBOL_GPL net/netfilter/nfnetlink 0x566adcaf	nfnetlink_send
