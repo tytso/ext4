@@ -8171,7 +8171,7 @@ static void __devexit iwl3945_pci_remove(struct pci_dev *pdev)
 	sysfs_remove_group(&pdev->dev.kobj, &iwl3945_attribute_group);
 
 	iwl3945_rfkill_unregister(priv);
-	cancel_delayed_work(&priv->rfkill_poll);
+	cancel_delayed_work_sync(&priv->rfkill_poll);
 	iwl3945_dealloc_ucode_pci(priv);
 
 	if (priv->rxq.bd)
