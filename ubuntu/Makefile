@@ -18,8 +18,10 @@ obj-$(CONFIG_FS_UNIONFS)	+= unionfs/
 obj-$(CONFIG_LIRC_DEV)          += lirc/
 obj-$(CONFIG_GFS_FS)		+= gfs/
 obj-$(CONFIG_TLSUP)		+= tlsup/
-obj-$(CONFIG_RT2860)            += ../drivers/staging/rt2860
-obj-$(CONFIG_RT2870)            += ../drivers/staging/rt2870
+obj-$(CONFIG_RT2860)		+= ../drivers/staging/rt2860/
+obj-$(CONFIG_RT2870)		+= ../drivers/staging/rt2870/
+obj-$(CONFIG_RTL8187SE)		+= ../drivers/staging/rtl8187se/
+obj-$(CONFIG_USB_ATMEL)		+= ../drivers/staging/at76_usb/
 
 obj-m				+= misc/ rfkill/
 
