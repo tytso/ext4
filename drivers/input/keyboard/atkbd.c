@@ -901,7 +901,7 @@ static void atkbd_hp_zv6100_keymap_fixup(struct atkbd *atkbd)
 }
 
 /*
- * Samsung NC10 with Fn+F? key release not working
+ * Samsung NC10, NC20 with Fn+F? key release not working
  */
 static void atkbd_samsung_keymap_fixup(struct atkbd *atkbd)
 {
@@ -1565,6 +1565,15 @@ static struct dmi_system_id atkbd_dmi_quirk_table[] __initdata = {
 		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "SAMSUNG ELECTRONICS CO., LTD."),
 			DMI_MATCH(DMI_PRODUCT_NAME, "NC10"),
+		},
+		.callback = atkbd_setup_fixup,
+		.driver_data = atkbd_samsung_keymap_fixup,
+	},
+	{
+		.ident = "Samsung NC20",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "SAMSUNG ELECTRONICS CO., LTD."),
+			DMI_MATCH(DMI_PRODUCT_NAME, "NC20"),
 		},
 		.callback = atkbd_setup_fixup,
 		.driver_data = atkbd_samsung_keymap_fixup,
