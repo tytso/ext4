@@ -22,6 +22,7 @@ obj-$(CONFIG_RT2860)		+= ../drivers/staging/rt2860/
 obj-$(CONFIG_RT2870)		+= ../drivers/staging/rt2870/
 obj-$(CONFIG_RTL8187SE)		+= ../drivers/staging/rtl8187se/
 obj-$(CONFIG_USB_ATMEL)		+= ../drivers/staging/at76_usb/
+obj-$(CONFIG_PRISM2_USB)	+= ../drivers/staging/wlan-ng/
 
 obj-m				+= misc/ rfkill/
 

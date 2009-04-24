@@ -22,5 +22,6 @@ source "drivers/staging/rt2860/Kconfig"
 source "drivers/staging/rt2870/Kconfig"
 source "drivers/staging/rtl8187se/Kconfig"
 source "drivers/staging/at76_usb/Kconfig"
+source "drivers/staging/wlan-ng/Kconfig"
 
 endmenu
