@@ -88,9 +88,11 @@ unsigned ext4_init_block_bitmap(struct super_block *sb, struct buffer_head *bh,
 		 ext4_group_t block_group, struct ext4_group_desc *gdp)
 {
 	int bit, bit_max;
+	ext4_group_t ngroups = EXT4_SB(sb)->s_groups_count;
 	unsigned free_blocks, group_blocks;
 	struct ext4_sb_info *sbi = EXT4_SB(sb);
 
+	smp_rmb();		/* after reading s_groups_count */
 	if (bh) {
 		J_ASSERT_BH(bh, buffer_locked(bh));
 
@@ -123,7 +125,7 @@ unsigned ext4_init_block_bitmap(struct super_block *sb, struct buffer_head *bh,
 		bit_max += ext4_bg_num_gdb(sb, block_group);
 	}
 
-	if (block_group == sbi->s_groups_count - 1) {
+	if (block_group == ngroups - 1) {
 		/*
 		 * Even though mke2fs always initialize first and last group
 		 * if some other tool enabled the EXT4_BG_BLOCK_UNINIT we need
@@ -131,7 +133,7 @@ unsigned ext4_init_block_bitmap(struct super_block *sb, struct buffer_head *bh,
 		 */
 		group_blocks = ext4_blocks_count(sbi->s_es) -
 			le32_to_cpu(sbi->s_es->s_first_data_block) -
-			(EXT4_BLOCKS_PER_GROUP(sb) * (sbi->s_groups_count - 1));
+			(EXT4_BLOCKS_PER_GROUP(sb) * (ngroups - 1));
 	} else {
 		group_blocks = EXT4_BLOCKS_PER_GROUP(sb);
 	}
