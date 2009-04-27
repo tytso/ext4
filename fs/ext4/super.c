@@ -37,9 +37,9 @@
 #include <linux/seq_file.h>
 #include <linux/proc_fs.h>
 #include <linux/ctype.h>
-#include <linux/marker.h>
 #include <linux/log2.h>
 #include <linux/crc16.h>
+#include <trace/ext4.h>
 #include <asm/uaccess.h>
 
 #include "ext4.h"
@@ -48,6 +48,8 @@
 #include "acl.h"
 #include "namei.h"
 #include "group.h"
+
+DEFINE_TRACE(ext4_sync_fs);
 
 struct proc_dir_entry *ext4_proc_root;
 static struct kset *ext4_kset;
@@ -3294,7 +3296,7 @@ static int ext4_sync_fs(struct super_block *sb, int wait)
 	int ret = 0;
 	tid_t target;
 
-	trace_mark(ext4_sync_fs, "dev %s wait %d", sb->s_id, wait);
+	trace_ext4_sync_fs(sb, wait);
 	sb->s_dirt = 0;
 	if (EXT4_SB(sb)->s_journal) {
 		if (jbd2_journal_start_commit(EXT4_SB(sb)->s_journal,

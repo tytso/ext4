@@ -4,3 +4,4 @@
 #include <trace/irq.h>
 #include <trace/lockdep.h>
 #include <trace/jbd2.h>
+#include <trace/ext4.h>
