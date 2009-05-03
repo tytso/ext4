@@ -368,6 +368,7 @@ DAC960
 davicom
 db9
 dc395x
+dca
 dccp
 dccp_ccid2
 dccp_ccid3
@@ -537,6 +538,7 @@ epat
 epca
 epia
 epic100
+e_powersaver
 eql
 es3210
 esb2rom
@@ -835,6 +837,7 @@ intel_menlow
 intel-rng
 intel_vr_nor
 interact
+ioatdma
 ioc4
 io_edgeport
 io_ti
@@ -850,8 +853,8 @@ ip6t_ah
 ip6t_eui64
 ip6t_frag
 ip6t_hbh
-ip6t_HL
 ip6t_hl
+ip6t_HL
 ip6t_ipv6header
 ip6t_LOG
 ip6t_mh
@@ -883,15 +886,15 @@ iptable_security
 ipt_addrtype
 ipt_ah
 ipt_CLUSTERIP
-ipt_ECN
 ipt_ecn
+ipt_ECN
 ipt_LOG
 ipt_MASQUERADE
 ipt_NETMAP
 ipt_REDIRECT
 ipt_REJECT
-ipt_TTL
 ipt_ttl
+ipt_TTL
 ipt_ULOG
 ip_vs
 ip_vs_dh
@@ -1172,6 +1175,7 @@ mtdoops
 mtdram
 mtouch
 multipath
+mvsas
 mwave
 mxb
 mxl5005s
@@ -1340,7 +1344,6 @@ p4-clockmod
 p54common
 p54pci
 p54usb
-p80211
 p8023
 padlock-aes
 padlock-sha
@@ -2045,7 +2048,6 @@ u132-hcd
 u14-34f
 uart401
 uart6850
-ub
 ubi
 ubifs
 ucb1400_core
@@ -2080,6 +2082,7 @@ usbled
 usblp
 usbmouse
 usbnet
+usbserial
 usbsevseg
 usb-storage
 usbtmc
@@ -2201,10 +2204,6 @@ x25_asy
 x38_edac
 xc5000
 xcbc
-xen-blkfront
-xen-fbfront
-xen-kbdfront
-xen-netfront
 xfrm4_mode_beet
 xfrm4_mode_transport
 xfrm4_mode_tunnel
@@ -2227,13 +2226,13 @@ xt_CLASSIFY
 xt_comment
 xt_connbytes
 xt_connlimit
-xt_CONNMARK
 xt_connmark
+xt_CONNMARK
 xt_CONNSECMARK
 xt_conntrack
 xt_dccp
-xt_DSCP
 xt_dscp
+xt_DSCP
 xt_esp
 xt_hashlimit
 xt_helper
@@ -2242,8 +2241,8 @@ xtkbd
 xt_length
 xt_limit
 xt_mac
-xt_MARK
 xt_mark
+xt_MARK
 xt_multiport
 xt_NFLOG
 xt_NFQUEUE
@@ -2253,8 +2252,8 @@ xt_physdev
 xt_pkttype
 xt_policy
 xt_quota
-xt_RATEEST
 xt_rateest
+xt_RATEEST
 xt_realm
 xt_recent
 xts
@@ -2264,8 +2263,8 @@ xt_socket
 xt_state
 xt_statistic
 xt_string
-xt_TCPMSS
 xt_tcpmss
+xt_TCPMSS
 xt_tcpudp
 xt_time
 xt_TPROXY
