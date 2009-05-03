@@ -3916,10 +3916,10 @@ static int do_md_stop(mddev_t * mddev, int mode, int is_open)
 				sysfs_remove_link(&mddev->kobj, nm);
 			}
 
-		export_array(mddev);
-
 		/* make sure all md_delayed_delete calls have finished */
 		flush_scheduled_work();
+
+		export_array(mddev);
 
 		mddev->array_sectors = 0;
 		mddev->size = 0;
