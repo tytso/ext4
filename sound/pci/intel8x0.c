@@ -2637,13 +2637,12 @@ static void __devinit intel8x0_measure_ac97_clock(struct intel8x0 *chip)
 	struct ichdev *ichdev;
 	unsigned long port;
 	unsigned long pos, pos1, t;
-	int civ, timeout = 1000, attempt = 1;
+	int civ, timeout = 1000;
 	struct timespec start_time, stop_time;
 
 	if (chip->ac97_bus->clock != 48000)
 		return; /* specified in module option */
 
-      __again:
 	subs = chip->pcm[0]->streams[0].substream;
 	if (! subs || subs->dma_buffer.bytes < INTEL8X0_TESTBUF_SIZE) {
 		snd_printk(KERN_WARNING "no playback buffer allocated - aborting measure ac97 clock\n");
@@ -2711,11 +2710,6 @@ static void __devinit intel8x0_measure_ac97_clock(struct intel8x0 *chip)
 
 	if (pos == 0) {
 		snd_printk(KERN_ERR "intel8x0: measure - unreliable DMA position..\n");
-	      __retry:
-		if (attempt < 2) {
-			attempt++;
-			goto __again;
-		}
 		return;
 	}
 
@@ -2726,15 +2720,14 @@ static void __devinit intel8x0_measure_ac97_clock(struct intel8x0 *chip)
 	printk(KERN_INFO "%s: measured %lu usecs (%lu samples)\n", __func__, t, pos);
 	if (t == 0) {
 		snd_printk(KERN_ERR "intel8x0: ?? calculation error..\n");
-		goto __retry;
+		return;
 	}
 	pos *= 1000;
 	pos = (pos / t) * 1000 + ((pos % t) * 1000) / t;
-	if (pos < 40000 || pos >= 60000) {
+	if (pos < 40000 || pos >= 60000) 
 		/* abnormal value. hw problem? */
 		printk(KERN_INFO "intel8x0: measured clock %ld rejected\n", pos);
-		goto __retry;
-	} else if (pos > 40500 && pos < 41500)
+	else if (pos > 40500 && pos < 41500)
 		/* first exception - 41000Hz reference clock */
 		chip->ac97_bus->clock = 41000;
 	else if (pos > 43600 && pos < 44600)
