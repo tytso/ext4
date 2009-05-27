@@ -320,6 +320,7 @@ EXPORT_SYMBOL vmlinux 0x12da5bb2	__kmalloc
 EXPORT_SYMBOL vmlinux 0x12e280e3	svc_proc_unregister
 EXPORT_SYMBOL vmlinux 0x13167d11	generic_permission
 EXPORT_SYMBOL vmlinux 0x13266092	put_io_context
+EXPORT_SYMBOL vmlinux 0x132f45f2	cookie_check_timestamp
 EXPORT_SYMBOL vmlinux 0x1333ea3d	xfrm6_rcv_spi
 EXPORT_SYMBOL vmlinux 0x13554e30	ipv6_chk_addr
 EXPORT_SYMBOL vmlinux 0x135ccf88	udp_disconnect
@@ -1590,6 +1591,7 @@ EXPORT_SYMBOL vmlinux 0x94fa2ac7	bio_init
 EXPORT_SYMBOL vmlinux 0x9501d078	__wait_on_bit_lock
 EXPORT_SYMBOL vmlinux 0x951cb42c	uart_resume_port
 EXPORT_SYMBOL vmlinux 0x9542164f	pcim_enable_device
+EXPORT_SYMBOL vmlinux 0x954488a4	syncookie_secret
 EXPORT_SYMBOL vmlinux 0x954729af	nf_reinject
 EXPORT_SYMBOL vmlinux 0x954cbb26	vsprintf
 EXPORT_SYMBOL vmlinux 0x95531f77	pci_find_parent_resource
