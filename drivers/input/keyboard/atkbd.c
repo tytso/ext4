@@ -933,6 +933,22 @@ static void atkbd_amilo_xi_2428_keymap_fixup(struct atkbd *atkbd)
 }
 
 /*
+ * Soltech TA12 netbook with broken key release on volume keys and mute key
+ */
+static void atkdb_soltech_ta12_keymap_fixup(struct atkbd *atkbd)
+{
+	const unsigned int forced_release_keys[] = {
+		0xa0, 0xae, 0xb0,
+	};
+	int i;
+
+	if (atkbd->set == 2)
+		for (i = 0; i < ARRAY_SIZE(forced_release_keys); i++)
+			__set_bit(forced_release_keys[i],
+				  atkbd->force_release_mask);
+}
+
+/*
  * atkbd_set_keycode_table() initializes keyboard's keycode table
  * according to the selected scancode set
  */
@@ -1614,6 +1630,15 @@ static struct dmi_system_id atkbd_dmi_quirk_table[] __initdata = {
 		},
 		.callback = atkbd_setup_fixup,
 		.driver_data = atkbd_amilo_xi_2428_keymap_fixup,
+	},
+	{
+		.ident = "Soltech Corporation TA12",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "Soltech Corporation"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "TA12"),
+		},
+		.callback = atkbd_setup_fixup,
+		.driver_data = atkdb_soltech_ta12_keymap_fixup,
 	},
 	{ }
 };
