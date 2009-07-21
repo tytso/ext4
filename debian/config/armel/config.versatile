@@ -213,6 +213,7 @@ CONFIG_DM_ZERO=m
 # CONFIG_DRM is not set
 # CONFIG_DUMMY is not set
 # CONFIG_DVB_CORE is not set
+CONFIG_E1000E_NEXT=m
 # CONFIG_ECONET is not set
 # CONFIG_ECRYPT_FS is not set
 # CONFIG_EEPROM_93CX6 is not set
