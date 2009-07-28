@@ -859,13 +859,11 @@ int aa_revalidate_sk(struct sock *sk, char *operation)
 	struct aa_profile *profile;
 	int error = 0;
 
-	/* this is some debugging code to flush out the network hooks that
-	   that are called in interrupt context */
-	if (in_interrupt()) {
-		printk("AppArmor Debug: Hook being called from interrupt context\n");
-		dump_stack();
+	/* aa_revalidate_sk should not be called from interrupt context
+	 * don't mediate these calls as they are not task related
+	 */
+	if (in_interrupt())
 		return 0;
-	}
 
 	profile = aa_get_profile(current);
 	if (profile)
