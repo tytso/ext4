@@ -422,7 +422,8 @@ static int __devinit maestro_probe(struct pci_dev *pdev,
 	retval = video_register_device(maestro_radio_inst, VFL_TYPE_RADIO, radio_nr);
 	if (retval) {
 		printk(KERN_ERR "can't register video device!\n");
-		goto errfr1;
+		video_device_release(maestro_radio_inst);
+		goto errfr;
 	}
 
 	if (!radio_power_on(radio_unit)) {
@@ -437,8 +438,6 @@ static int __devinit maestro_probe(struct pci_dev *pdev,
 	return 0;
 errunr:
 	video_unregister_device(maestro_radio_inst);
-errfr1:
-	video_device_release(maestro_radio_inst);
 errfr:
 	kfree(radio_unit);
 err:
