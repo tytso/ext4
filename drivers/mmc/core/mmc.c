@@ -434,16 +434,6 @@ static int mmc_init_card(struct mmc_host *host, u32 ocr,
 	 * Activate wide bus (if supported).
 	 */
 	if ((card->csd.mmca_vsn >= CSD_SPEC_VER_4) &&
-#ifdef CONFIG_ARCH_MXC_CANONICAL
-		(host->caps & MMC_CAP_8_BIT_DATA)) {
-		err = mmc_switch(card, EXT_CSD_CMD_SET_NORMAL,
-			EXT_CSD_BUS_WIDTH, EXT_CSD_BUS_WIDTH_8);
-		if (err)
-			goto free_card;
-
-		mmc_set_bus_width(card->host, MMC_BUS_WIDTH_8);
-	} else if ((card->csd.mmca_vsn >= CSD_SPEC_VER_4) &&
-#endif
 		(host->caps & MMC_CAP_4_BIT_DATA)) {
 		err = mmc_switch(card, EXT_CSD_CMD_SET_NORMAL,
 			EXT_CSD_BUS_WIDTH, EXT_CSD_BUS_WIDTH_4);
