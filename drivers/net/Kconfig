@@ -978,18 +978,6 @@ config SMC911X
 	  called smc911x.  If you want to compile it as a module, say M 
 	  here and read <file:Documentation/kbuild/modules.txt>
 
-config SMSC911X
-	tristate "SMSC LAN911x/LAN921x families embedded ethernet support"
-	depends on NET_ETHERNET
-	select CRC32
-	select MII
-	---help---
-	  Say Y here if you want support for SMSC LAN911x and LAN921x families
-	  of ethernet controllers.
-	  To compile this driver as a module, choose M here and read
-	  <file:Documentation/networking/net-modules.txt>. The module
-	  will be called smsc911x.
-
 config NET_VENDOR_RACAL
 	bool "Racal-Interlan (Micom) NI cards"
 	depends on ISA
@@ -1823,10 +1811,10 @@ config 68360_ENET
 
 config FEC
 	bool "FEC ethernet controller (of ColdFire CPUs)"
-	depends on M523x || M527x || M5272 || M528x || M520x || ARCH_MX51
+	depends on M523x || M527x || M5272 || M528x || M520x
 	help
 	  Say Y here if you want to use the built-in 10/100 Fast ethernet
-	  controller on some Motorola ColdFire/Freescale processors.
+	  controller on some Motorola ColdFire processors.
 
 config FEC2
 	bool "Second FEC ethernet controller (on some ColdFire CPUs)"

@@ -158,9 +158,6 @@
 /* SH-SCI */
 #define PORT_SCIFA	83
 
-/* Freescale Semiconductor MXC fmaily */
-#define PORT_MXC        84
-
 #ifdef __KERNEL__
 
 #include <linux/compiler.h>

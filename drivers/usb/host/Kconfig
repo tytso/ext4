@@ -42,69 +42,9 @@ config USB_EHCI_HCD
 	  To compile this driver as a module, choose M here: the
 	  module will be called ehci-hcd.
 
-config USB_EHCI_ARC
-	bool "Support for Freescale controller"
-	depends on USB_EHCI_HCD && ARCH_MXC
-	---help---
-	   Some Freescale processors have an integrated High Speed
-	   USBOTG controller, which supports EHCI host mode.
-
-	   Say "y" here to add support for this controller
-	   to the EHCI HCD driver.
-
-config USB_EHCI_ARC_H1
-	bool "Support for Host1 port on Freescale controller"
-	depends on USB_EHCI_ARC	&& (ARCH_MX51)
-	---help---
-	  Enable support for the USB Host1 port.
-
-config USB_EHCI_ARC_H2
-	bool "Support for Host2 port on Freescale controller"
-	depends on USB_EHCI_ARC	&& (ARCH_MX51)
-	---help---
-	  Enable support for the USB Host2 port.
-
-config USB_EHCI_ARC_OTG
-	bool "Support for DR host port on Freescale controller"
-	depends on USB_EHCI_ARC
-	default y
-	---help---
-	  Enable support for the USB OTG port in HS/FS Host mode.
-
-config USB_STATIC_IRAM
-	bool "Use IRAM for USB"
-	depends on USB_EHCI_ARC
-	---help---
-	  Enable this option to use IRAM instead of DRAM for USB
-	  structures and buffers.  This option will reduce bus
-	  contention on systems with large (VGA+) framebuffer
-	  devices and heavy USB activity.  There are performance
-	  penalties and usage restrictions when using this option.
-
-	  If in doubt, say N.
-
-choice
-	prompt "Select transceiver for DR port"
-	depends on USB_EHCI_ARC_OTG
-	default USB_EHCI_FSL_UTMI if (ARCH_MX51)
-	---help---
-	  Choose the transceiver to use with the Freescale DR port.
-
-config USB_EHCI_FSL_UTMI
-	bool "Internal UTMI"
-	depends on (ARCH_MX51)
-	---help---
-	  Enable support for the on-chip High Speed UTMI transceiver.
-
-	  This is the factory default for the mx35ads board.
-
-endchoice
-
-
 config USB_EHCI_ROOT_HUB_TT
 	bool "Root Hub Transaction Translators"
 	depends on USB_EHCI_HCD
-	default y if USB_EHCI_ARC
 	---help---
 	  Some EHCI chips have vendor-specific extensions to integrate
 	  transaction translators, so that no OHCI or UHCI companion

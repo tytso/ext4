@@ -19,7 +19,6 @@ obj-$(CONFIG_USB_ATMEL_USBA)	+= atmel_usba_udc.o
 obj-$(CONFIG_USB_FSL_USB2)	+= fsl_usb2_udc.o
 obj-$(CONFIG_USB_M66592)	+= m66592-udc.o
 obj-$(CONFIG_USB_FSL_QE)	+= fsl_qe_udc.o
-obj-$(CONFIG_USB_ARC)		+= arcotg_udc.o
 
 #
 # USB gadget drivers
@@ -28,11 +27,7 @@ g_zero-objs			:= zero.o
 g_ether-objs			:= ether.o
 g_serial-objs			:= serial.o
 g_midi-objs			:= gmidi.o
-ifeq ($(CONFIG_ARCH_MXC_CANONICAL),y)
-gadgetfs-objs			:= arm_mxc_ubuntu_inode.o
-else
 gadgetfs-objs			:= inode.o
-endif
 g_file_storage-objs		:= file_storage.o
 g_printer-objs			:= printer.o
 g_cdc-objs			:= cdc2.o

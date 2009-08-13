@@ -127,20 +127,6 @@ struct ehci_hcd {			/* one per controller */
 
 	u8			sbrn;		/* packed release number */
 
-#ifdef CONFIG_ARCH_MXC_CANONICAL
-	/*
-	 * OTG controllers and transceivers need software interaction;
-	 * other external transceivers should be software-transparent
-	 */
-	struct otg_transceiver   *transceiver;
-#ifdef CONFIG_USB_STATIC_IRAM
-	u32			iram_buffer[2];
-	u32			iram_buffer_v[2];
-	int  			iram_in_use[2];
-	int			usb_address[2];
-#endif
-#endif
-
 	/* irq statistics */
 #ifdef EHCI_STATS
 	struct ehci_stats	stats;
@@ -277,12 +263,6 @@ struct ehci_qtd {
 	struct list_head	qtd_list;		/* sw qtd list */
 	struct urb		*urb;			/* qtd's urb */
 	size_t			length;			/* length of buffer */
-#ifdef CONFIG_ARCH_MXC_CANONICAL
-#ifdef CONFIG_USB_STATIC_IRAM
-	size_t			buffer_offset;
-	int			last_one;
-#endif
-#endif
 } __attribute__ ((aligned (32)));
 
 /* mask NakCnt+T in qh->hw_alt_next */
@@ -727,12 +707,6 @@ static inline u32 hc32_to_cpup (const struct ehci_hcd *ehci, const __hc32 *x)
 #define STUB_DEBUG_FILES
 #endif	/* DEBUG */
 
-#ifdef CONFIG_ARCH_MXC_CANONICAL
-#ifdef CONFIG_USB_STATIC_IRAM
-#define IRAM_TD_SIZE	1024		/* size of 1 qTD's buffer */
-#define IRAM_NTD	2		/* number of TDs in IRAM  */
-#endif
-#endif
 /*-------------------------------------------------------------------------*/
 
 #endif /* __LINUX_EHCI_HCD_H */

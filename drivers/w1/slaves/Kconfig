@@ -22,12 +22,6 @@ config W1_SLAVE_DS2433
 	  Say Y here if you want to use a 1-wire
 	  4kb EEPROM family device (DS2433).
 
-config W1_SLAVE_DS2438
-	tristate "Smart Battery Monitor (DS2438)"
-	help
-	  Say Y here if you want to use a 1-wire
-	  Smart Battery Monitor family device (DS2438).
-
 config W1_SLAVE_DS2433_CRC
 	bool "Protect DS2433 data with a CRC16"
 	depends on W1_SLAVE_DS2433

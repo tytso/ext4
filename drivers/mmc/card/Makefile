@@ -12,4 +12,3 @@ obj-$(CONFIG_MMC_TEST)		+= mmc_test.o
 
 obj-$(CONFIG_SDIO_UART)		+= sdio_uart.o
 
-obj-$(CONFIG_SDIO_UNIFI_FS)	+= unifi_fs/

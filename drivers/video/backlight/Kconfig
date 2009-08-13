@@ -214,17 +214,3 @@ config BACKLIGHT_SAHARA
 	help
 	  If you have a Tabletkiosk Sahara Touch-iT, say y to enable the
 	  backlight driver.
-
-menuconfig BACKLIGHT_MXC
-	bool "Freescale MXC/i.MX Backlight Drivers"
-	depends on BACKLIGHT_CLASS_DEVICE && ARCH_MXC
-	default y
-	help
-	  If you have a Freescale MC13783 PMIC, say y to enable the
-	  backlight driver.
-
-config BACKLIGHT_MXC_MC13892
-	tristate "Mc13892 Backlight Driver"
-	depends on BACKLIGHT_MXC && MXC_MC13892_LIGHT
-	default y
-

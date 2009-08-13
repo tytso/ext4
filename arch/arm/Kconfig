@@ -421,12 +421,11 @@ config ARCH_MV78XX0
 
 config ARCH_MXC
 	bool "Freescale MXC/iMX-based"
-	select ARCH_MTD_XIP
 	select GENERIC_TIME
 	select GENERIC_CLOCKEVENTS
-#	select GENERIC_GPIO
-#	select ARCH_REQUIRE_GPIOLIB
-	select ZONE_DMA
+	select ARCH_MTD_XIP
+	select GENERIC_GPIO
+	select ARCH_REQUIRE_GPIOLIB
 	help
 	  Support for Freescale MXC/iMX-based family of processors
 
@@ -1038,7 +1037,7 @@ endmenu
 
 menu "CPU Power Management"
 
-if (ARCH_SA1100 || ARCH_INTEGRATOR || ARCH_OMAP || ARCH_IMX || ARCH_PXA || ARCH_MXC)
+if (ARCH_SA1100 || ARCH_INTEGRATOR || ARCH_OMAP || ARCH_IMX || ARCH_PXA)
 
 source "drivers/cpufreq/Kconfig"
 
@@ -1077,12 +1076,6 @@ config CPU_FREQ_PXA
 	depends on CPU_FREQ && ARCH_PXA && PXA25x
 	default y
 	select CPU_FREQ_DEFAULT_GOV_USERSPACE
-
-config CPU_FREQ_IMX
-         tristate "CPUfreq driver for i.MX CPUs"
-         depends on ARCH_MXC && CPU_FREQ && REGULATOR
-         help
-           This enables the CPUfreq driver for i.MX CPUs.
 
 endif
 
@@ -1282,10 +1275,6 @@ source "drivers/auxdisplay/Kconfig"
 source "drivers/regulator/Kconfig"
 
 source "drivers/uio/Kconfig"
-
-if ARCH_MXC
-source "drivers/mxc/Kconfig"
-endif
 
 endmenu
 

@@ -16,16 +16,10 @@ config ARCH_MX3
 	help
 	  This enables support for systems based on the Freescale i.MX3 family
 
-config ARCH_MX51
-    bool "MX51-based"
-    help
-      This enables support for systems based on Freescale i.MX51
-
 endchoice
 
 source "arch/arm/mach-mx2/Kconfig"
 source "arch/arm/mach-mx3/Kconfig"
-source "arch/arm/mach-mx51/Kconfig"
 
 endmenu
 
@@ -39,40 +33,5 @@ config MXC_IRQ_PRIOR
 	  This may be useful in embedded applications, where are strong
 	  requirements for timing.
 	  Say N here, unless you have a specialized requirement.
-
-config MXC_TZIC
-	bool
-	depends on ARCH_MXC
-
-config DMA_ZONE_SIZE
-	int "DMA memory zone size"
-	range 0 64
-	default 24
-	help
-	  This is the size in MB for the DMA zone. The DMA zone is used for
-	  dedicated memory for large contiguous video buffers
-
-# set iff we need the 1504 transceiver code
-config ISP1504_MXC
-	bool
-	select ISP1504_MXC_OTG if USB_GADGET && USB_EHCI_HCD && USB_OTG
-	default y if USB_EHCI_FSL_1504 || USB_GADGET_FSL_1504
-
-config ISP1504_MXC_OTG
-	tristate
-	help
-	  Support for USB OTG pin detect using the ISP1504 transceiver on MXC platforms.
-
-# set iff we need the UTMI transceiver code
-config UTMI_MXC
-	bool
-	select UTMI_MXC_OTG if ARCH_MX25 && USB_GADGET && USB_EHCI_HCD && USB_OTG
-	default y if USB_EHCI_FSL_UTMI || USB_GADGET_FSL_UTMI
-	depends on ARCH_MX51
-
-config UTMI_MXC_OTG
-	tristate
-	help
-	  Support for USB OTG pin detect using the UTMI transceiver on MXC platforms.
 
 endif

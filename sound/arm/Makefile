@@ -17,10 +17,3 @@ snd-pxa2xx-lib-$(CONFIG_SND_PXA2XX_LIB_AC97)	+= pxa2xx-ac97-lib.o
 
 obj-$(CONFIG_SND_PXA2XX_AC97)	+= snd-pxa2xx-ac97.o
 snd-pxa2xx-ac97-objs		:= pxa2xx-ac97.o
-
-#
-# Define the header file locations for PMIC drivers.
-#
-CFLAGS_mxc_alsa_spdif.o = -I$(TOPDIR)/drivers/mxc
-obj-$(CONFIG_SND_MXC_SPDIF)    += snd-spdif.o
-snd-spdif-objs                 := mxc-alsa-spdif.o
