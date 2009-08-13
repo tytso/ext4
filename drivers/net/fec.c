@@ -2209,7 +2209,7 @@ static void __inline__ fec_localhw_setup(struct net_device *dev)
  */
 static void __inline__ fec_dcache_inv_range(void * start, void * end)
 {
-	dmac_inv_range(start, end);
+	dma_sync_single(NULL, (unsigned long)__pa(start), (unsigned long) (end-start), DMA_FROM_DEVICE);
 	return ;
 }
 
@@ -2218,7 +2218,7 @@ static void __inline__ fec_dcache_inv_range(void * start, void * end)
  */
 static void __inline__ fec_dcache_flush_range(void * start, void * end)
 {
-	dmac_flush_range(start, end);
+	dma_sync_single(NULL, (unsigned long)__pa(start), (unsigned long) (end-start), DMA_BIDIRECTIONAL);
 	return ;
 }
 
