@@ -427,15 +427,8 @@ config ARCH_MXC
 #	select GENERIC_GPIO
 #	select ARCH_REQUIRE_GPIOLIB
 	select ZONE_DMA
-	select ARCH_MXC_CANONICAL
 	help
 	  Support for Freescale MXC/iMX-based family of processors
-
-config ARCH_MXC_CANONICAL
-       bool "Ubuntu - Enable Freescale code that touches common paths"
-       depends on ARCH_MXC
-       help
-         Choose this option to enable all common ARM arch code for Freescale in Ubuntu's kernel. This should be disabled all all Ubuntu kernel flavour except the iMX flavours.
 
 config ARCH_ORION5X
 	bool "Marvell Orion"
