@@ -900,6 +900,18 @@ static struct hda_verb stac92hd71bxx_analog_core_init[] = {
 	{}
 };
 
+static struct hda_verb stac92hd71bxx_hp_m4_analog_core_init[] = {
+	{ 0x0f, AC_VERB_SET_CONNECT_SEL, 0x2},
+	{ 0x0f, AC_VERB_SET_PIN_WIDGET_CONTROL, PIN_OUT}, /* Speaker */
+	/* unmute dac0 input in audio mixer */
+	{ 0x17, AC_VERB_SET_AMP_GAIN_MUTE, 0x701f},
+	/* unmute right and left channels for nodes 0x0a, 0xd, 0x0f */
+	{ 0x0a, AC_VERB_SET_AMP_GAIN_MUTE, AMP_IN_UNMUTE(0)},
+	{ 0x0d, AC_VERB_SET_AMP_GAIN_MUTE, AMP_IN_UNMUTE(0)},
+	{ 0x0f, AC_VERB_SET_AMP_GAIN_MUTE, AMP_IN_UNMUTE(0)},
+	{}
+};
+
 static struct hda_verb stac925x_core_init[] = {
 	/* set dac0mux for dac converter */
 	{ 0x06, AC_VERB_SET_CONNECT_SEL, 0x00},
@@ -1138,6 +1150,22 @@ static struct snd_kcontrol_new stac92hd71bxx_analog_mixer[] = {
 
 	HDA_CODEC_MUTE("DAC1 Capture Switch", 0x17, 0x4, HDA_INPUT),
 	HDA_CODEC_VOLUME("DAC1 Capture Volume", 0x17, 0x4, HDA_INPUT),
+	{ } /* end */
+};
+
+static struct snd_kcontrol_new stac92hd71bxx_hp_m4_analog_mixer[] = {
+	STAC_INPUT_SOURCE(2),
+
+	HDA_CODEC_VOLUME_IDX("Capture Volume", 0x0, 0x1c, 0x0, HDA_OUTPUT),
+	HDA_CODEC_MUTE_IDX("Capture Switch", 0x0, 0x1c, 0x0, HDA_OUTPUT),
+	HDA_CODEC_VOLUME_IDX("Capture Mux Volume", 0x0, 0x1a, 0x0, HDA_OUTPUT),
+
+	HDA_CODEC_VOLUME_IDX("Capture Volume", 0x1, 0x1d, 0x0, HDA_OUTPUT),
+	HDA_CODEC_MUTE_IDX("Capture Switch", 0x1, 0x1d, 0x0, HDA_OUTPUT),
+	HDA_CODEC_VOLUME_IDX("Capture Mux Volume", 0x1, 0x1b, 0x0, HDA_OUTPUT),
+
+	HDA_CODEC_MUTE("Analog Loopback 1", 0x17, 0x3, HDA_INPUT),
+	HDA_CODEC_MUTE("Analog Loopback 2", 0x17, 0x4, HDA_INPUT),
 	{ } /* end */
 };
 
@@ -4666,15 +4694,25 @@ again:
 		codec->slave_dig_outs = stac92hd71bxx_slave_dig_outs;
 		break;
 	case 0x111d7608: /* 5 Port with Analog Mixer */
+		spec->mixer = stac92hd71bxx_analog_mixer;
+		/* disable VSW */
+		spec->init = &stac92hd71bxx_analog_core_init[HD_DISABLE_PORTF];
+
 		switch (spec->board_config) {
 		case STAC_HP_M4:
-			/* Enable VREF power saving on GPIO1 detect */
-			snd_hda_codec_write_cache(codec, codec->afg, 0,
-				AC_VERB_SET_GPIO_UNSOLICITED_RSP_MASK, 0x02);
-			snd_hda_codec_write_cache(codec, codec->afg, 0,
-					AC_VERB_SET_UNSOLICITED_ENABLE,
-					(AC_USRSP_EN | STAC_VREF_EVENT | 0x01));
-			spec->gpio_mask |= 0x02;
+			if ((codec->subsystem_id == 0x103c361a) &&
+			    (codec->revision_id & 0xf) == 2) {
+				spec->mixer = stac92hd71bxx_hp_m4_analog_mixer;
+				spec->init = stac92hd71bxx_hp_m4_analog_core_init;
+			} else {
+				/* Enable VREF power saving on GPIO1 detect */
+				snd_hda_codec_write_cache(codec, codec->afg, 0,
+					AC_VERB_SET_GPIO_UNSOLICITED_RSP_MASK, 0x02);
+				snd_hda_codec_write_cache(codec, codec->afg, 0,
+						AC_VERB_SET_UNSOLICITED_ENABLE,
+						(AC_USRSP_EN | STAC_VREF_EVENT | 0x01));
+				spec->gpio_mask |= 0x02;
+			}
 			break;
 		}
 		if ((codec->revision_id & 0xf) == 0 ||
@@ -4687,11 +4725,8 @@ again:
 
 		/* no output amps */
 		spec->num_pwrs = 0;
-		spec->mixer = stac92hd71bxx_analog_mixer;
 		spec->dinput_mux = &spec->private_dimux;
 
-		/* disable VSW */
-		spec->init = &stac92hd71bxx_analog_core_init[HD_DISABLE_PORTF];
 		stac92xx_set_config_reg(codec, 0xf, 0x40f000f0);
 		break;
 	case 0x111d7603: /* 6 Port with Analog Mixer */
