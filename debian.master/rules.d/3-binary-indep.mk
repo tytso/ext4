@@ -30,7 +30,8 @@ install-headers:
 	dh_clean -k -p$(indep_hdrpkg)
 
 	install -d $(indep_hdrdir)
-	find . -path './debian/*' -prune -o -path './include/*' -prune \
+	find . -path './debian' -prune -o -path './$(DEBIAN)' -prune \
+	  -o -path './include/*' -prune \
 	  -o -path './scripts/*' -prune -o -type f \
 	  \( -name 'Makefile*' -o -name 'Kconfig*' -o -name 'Kbuild*' -o \
 	     -name '*.sh' -o -name '*.pl' -o -name '*.lds' \) \
@@ -51,7 +52,7 @@ install-source:
 	dh_clean -k -p$(srcpkg)
 
 	install -d $(srcdir)
-	find . -path './debian/*' -prune -o \
+	find . -path './debian' -prune -o -path './$(DEBIAN)' -prune -o \
 		-path './.*' -prune -o -print | \
 		cpio -pd --preserve-modification-time $(srcdir)
 	(cd $(srcdir)/..; tar cf - $(srcpkg)) | bzip2 -9c > \

@@ -1,11 +1,11 @@
 #
-# The source [package name will be the first token from debian/changelog
+# The source [package name will be the first token from $(DEBIAN)/changelog
 #
-src_pkg_name=$(shell sed -n '1s/^\(.*\) (.*).*$$/\1/p' debian/changelog)
+src_pkg_name=$(shell sed -n '1s/^\(.*\) (.*).*$$/\1/p' $(DEBIAN)/changelog)
 
 # Get some version info
-release := $(shell sed -n '1s/^$(src_pkg_name).*(\(.*\)-.*).*$$/\1/p' debian/changelog)
-revisions := $(shell sed -n 's/^$(src_pkg_name)\ .*($(release)-\(.*\)).*$$/\1/p' debian/changelog | tac)
+release := $(shell sed -n '1s/^$(src_pkg_name).*(\(.*\)-.*).*$$/\1/p' $(DEBIAN)/changelog)
+revisions := $(shell sed -n 's/^$(src_pkg_name)\ .*($(release)-\(.*\)).*$$/\1/p' $(DEBIAN)/changelog | tac)
 revision ?= $(word $(words $(revisions)),$(revisions))
 prev_revisions := $(filter-out $(revision),0.0 $(revisions))
 prev_revision := $(word $(words $(prev_revisions)),$(prev_revisions))
@@ -67,9 +67,9 @@ endif
 SUBLEVEL	:= $(shell echo $(release) | awk -F. '{print $$3}')
 
 arch		:= $(shell dpkg-architecture -qDEB_HOST_ARCH)
-abidir		:= $(CURDIR)/debian/abi/$(release)-$(revision)/$(arch)
-prev_abidir	:= $(CURDIR)/debian/abi/$(release)-$(prev_revision)/$(arch)
-confdir		:= $(CURDIR)/debian/config/$(arch)
+abidir		:= $(CURDIR)/$(DEBIAN)/abi/$(release)-$(revision)/$(arch)
+prev_abidir	:= $(CURDIR)/$(DEBIAN)/abi/$(release)-$(prev_revision)/$(arch)
+confdir		:= $(CURDIR)/$(DEBIAN)/config/$(arch)
 builddir	:= $(CURDIR)/debian/build
 stampdir	:= $(CURDIR)/debian/stamps
 
@@ -113,3 +113,9 @@ kmake = make ARCH=$(build_arch) \
 ifneq ($(LOCAL_ENV_CC),)
 kmake += CC=$(LOCAL_ENV_CC) DISTCC_HOSTS=$(LOCAL_ENV_DISTCC_HOSTS)
 endif
+# CONCURRENCY_LEVEL=16 fakeroot $(DEBIAN)/rules binary-debs
+# or
+# DEB_BUILD_OPTIONS=parallel=16 fakeroot $(DEBIAN)/rules binary-debs
+#
+# The default is to use the number of CPUs.
+#

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+. debian/debian.env
+
 # We have to be in the top level kernel source directory
 if [ ! -f MAINTAINERS ] || [ ! -f Makefile ]; then
 	echo "This does not appear to be the kernel source directory." 1>&2
@@ -22,8 +24,8 @@ case "$arch" in
 	*)	kernarch="$arch"	;;
 esac
 
-confdir="`pwd`/debian/config/$arch"
-bindir="`pwd`/debian/scripts/misc"
+confdir="`pwd`/$(DEBIAN)/config/$arch"
+bindir="`pwd`/$(DEBIAN)/scripts/misc"
 
 # Make sure the architecture exists
 if [ ! -d $confdir ]; then
