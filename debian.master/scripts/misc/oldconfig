@@ -24,8 +24,8 @@ case "$arch" in
 	*)	kernarch="$arch"	;;
 esac
 
-confdir="`pwd`/$(DEBIAN)/config/$arch"
-bindir="`pwd`/$(DEBIAN)/scripts/misc"
+confdir="`pwd`/$DEBIAN/config/$arch"
+bindir="`pwd`/$DEBIAN/scripts/misc"
 
 # Make sure the architecture exists
 if [ ! -d $confdir ]; then
