@@ -1,0 +1,32 @@
+#!/bin/bash -e
+
+. debian/debian.env
+
+echo "SUB_PROCESS $FROM => $TO"
+
+export from_pkg="linux-image-$ABI_RELEASE-$FROM"
+export to_pkg="linux-image-$ABI_RELEASE-$TO"
+
+from_moddir="debian/$from_pkg/lib/modules/$ABI_RELEASE-$FROM"
+to_moddir="debian/$to_pkg/lib/modules/$ABI_RELEASE-$FROM"
+
+install -d "debian/$to_pkg/boot"
+install -m644 debian/$from_pkg/boot/{vmlinuz,System.map,config}-$ABI_RELEASE-$FROM \
+	debian/$to_pkg/boot/
+
+cat ${DEBIAN}/sub-flavours/$TO.list | while read line; do
+	(cd debian/$from_pkg/lib/modules/$ABI_RELEASE-$FROM/kernel;
+	eval find $line -name '*.ko');
+done | while read mod; do
+	echo "SUB_INST checking: $mod"
+	fromdir="/lib/modules/$ABI_RELEASE-$FROM/"
+	egrep "^($fromdir)?kernel/$mod:" \
+		$from_moddir/modules.dep | sed -e "s|^$fromdir||" -e 's/://' -e 's/ /\n/g' | \
+	while read m; do
+		m="${fromdir}$m"
+		test -f debian/$to_pkg/$m && continue
+		echo "SUB_INST installing: $mod"
+		install -D -m644 debian/$from_pkg/$m \
+			debian/$to_pkg/$m
+	done
+done
