@@ -62,14 +62,14 @@ clean: debian/control
 	# Install the copyright information.
 	cp $(DEBIAN)/copyright debian/copyright
 
+# Builds the source, doc and linux-headers indep packages
+include $(DEBIAN)/rules.d/3-binary-indep.mk
+
 # Builds the image, arch headers and debug packages
 include $(DEBIAN)/rules.d/2-binary-arch.mk
 
 # Rules for building the udebs ($(DEBIAN)-installer)
 include $(DEBIAN)/rules.d/5-udebs.mk
-
-# Builds the source, doc and linux-headers indep packages
-include $(DEBIAN)/rules.d/3-binary-indep.mk
 
 # Various checks to be performed on builds
 include $(DEBIAN)/rules.d/4-checks.mk
