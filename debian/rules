@@ -8,7 +8,7 @@
 #
 
 ifeq ($(DEBIAN),)
-DEBIAN=debian.master
+DEBIAN=debian.fsl-imx51
 endif
 
 DENV=debian/debian.env
