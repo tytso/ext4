@@ -32,7 +32,7 @@ install-%: dbgpkgdir = $(CURDIR)/debian/linux-image-debug-$(abi_release)-$*
 install-%: basepkg = linux-headers-$(abi_release)
 install-%: hdrdir = $(CURDIR)/debian/$(basepkg)-$*/usr/src/$(basepkg)-$*
 install-%: target_flavour = $*
-install-%: $(stampdir)/stamp-build-% checks-%
+install-%: $(stampdir)/stamp-build-% checks-% install-headers
 	dh_testdir
 	dh_testroot
 	dh_clean -k -p$(bin_pkg_name)-$*
@@ -116,16 +116,18 @@ endif
 	# The flavour specific headers image
 	# TODO: Would be nice if we didn't have to dupe the original builddir
 	install -d -m755 $(hdrdir)
+	#
+	# Now drop in the arch independent headers
+	#
+	cp -a $(indep_hdrdir)/. $(hdrdir)
+
 	cat $(builddir)/build-$*/.config | \
 		sed -e 's/.*CONFIG_DEBUG_INFO=.*/# CONFIG_DEBUG_INFO is not set/g' > \
 		$(hdrdir)/.config
 	chmod 644 $(hdrdir)/.config
 	$(kmake) O=$(hdrdir) silentoldconfig prepare scripts
-	# We'll symlink this stuff
-	rm -f $(hdrdir)/Makefile
 	rm -rf $(hdrdir)/include2
-	# Script to symlink everything up
-	$(SHELL) $(DEBIAN)/scripts/link-headers "$(hdrdir)" "$(basepkg)" "$*"
+
 	# Setup the proper asm symlink
 	rm -f $(hdrdir)/include/asm
 	ln -s asm-$(asm_link) $(hdrdir)/include/asm

@@ -30,17 +30,6 @@ Description: Linux kernel source for version PKGVER with Ubuntu patches
  you do not want this package. Install the appropriate linux-headers
  package instead.
 
-Package: SRCPKGNAME-headers-PKGVER-ABINUM
-Architecture: all
-Section: devel
-Priority: optional
-Depends: coreutils | fileutils (>= 4.0)
-Provides: SRCPKGNAME-headers, SRCPKGNAME-headers-2.6
-Description: Header files related to Linux kernel version PKGVER
- This package provides kernel header files for version PKGVER, for sites
- that want the latest kernel headers. Please read
- /usr/share/doc/SRCPKGNAME-headers-PKGVER-ABINUM/debian.README.gz for details
-
 Package: SRCPKGNAME-libc-dev
 Architecture: armel
 Conflicts: libc6-dev (<< 2.3.2.ds1-6), libc6.1-dev (<< 2.3.2.ds1-6), dvb-dev (<< 1.0.1-6), amd64-libs-dev (<= 1.1), SRCPKGNAME-kernel-headers

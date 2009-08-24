@@ -37,21 +37,7 @@ install-source:
 		$(srcdir).tar.bz2
 	rm -rf $(srcdir)
 
-install-indep: install-headers install-source
-
-# This is just to make it easy to call manually. Normally done in
-# binary-indep target during builds.
-binary-headers: install-headers
-	dh_testdir
-	dh_testroot
-	dh_installchangelogs -p$(indep_hdrpkg)
-	dh_installdocs -p$(indep_hdrpkg)
-	dh_compress -p$(indep_hdrpkg)
-	dh_fixperms -p$(indep_hdrpkg)
-	dh_installdeb -p$(indep_hdrpkg)
-	dh_gencontrol -p$(indep_hdrpkg)
-	dh_md5sums -p$(indep_hdrpkg)
-	dh_builddeb -p$(indep_hdrpkg)
+install-indep: install-source
 
 binary-indep: install-indep
 	dh_testdir
