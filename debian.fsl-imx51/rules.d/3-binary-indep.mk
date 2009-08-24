@@ -1,27 +1,5 @@
 build-indep:
 
-docpkg = linux-doc-$(release)
-docdir = $(CURDIR)/debian/$(docpkg)/usr/share/doc/$(docpkg)
-install-doc:
-	dh_testdir
-	dh_testroot
-	dh_clean -k -p$(docpkg)
-
-	install -d $(docdir)
-
-	# First the html docs. We skip these for autobuilds
-	if [ -z "$(AUTOBUILD) nobuild" ]; then \
-		install -d $(docdir)/linux-doc-tmp; \
-		$(kmake) O=$(docdir)/linux-doc-tmp htmldocs; \
-		mv $(docdir)/linux-doc-tmp/Documentation/DocBook \
-			$(docdir)/html; \
-		rm -rf $(docdir)/linux-doc-tmp; \
-	fi
-
-	# Copy the rest
-	cp -a Documentation/* $(docdir)
-	rm -rf $(docdir)/DocBook
-
 indep_hdrpkg = linux-headers-$(abi_release)
 indep_hdrdir = $(CURDIR)/debian/$(indep_hdrpkg)/usr/src/$(indep_hdrpkg)
 install-headers:
@@ -59,7 +37,7 @@ install-source:
 		$(srcdir).tar.bz2
 	rm -rf $(srcdir)
 
-install-indep: install-headers install-doc install-source
+install-indep: install-headers install-source
 
 # This is just to make it easy to call manually. Normally done in
 # binary-indep target during builds.
