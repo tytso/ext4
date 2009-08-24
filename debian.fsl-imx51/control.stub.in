@@ -30,13 +30,3 @@ Description: Linux kernel source for version PKGVER with Ubuntu patches
  you do not want this package. Install the appropriate linux-headers
  package instead.
 
-Package: SRCPKGNAME-libc-dev
-Architecture: armel
-Conflicts: libc6-dev (<< 2.3.2.ds1-6), libc6.1-dev (<< 2.3.2.ds1-6), dvb-dev (<< 1.0.1-6), amd64-libs-dev (<= 1.1), SRCPKGNAME-kernel-headers
-Replaces: libc6-dev (<< 2.3.2.ds1-6), libc6.1-dev (<< 2.3.2.ds1-6), dvb-dev (<< 1.0.1-6), SRCPKGNAME-kernel-headers, libdrm-dev
-Provides: SRCPKGNAME-kernel-headers
-Description: Linux Kernel Headers for development
- This package provides headers from the Linux kernel.  These headers
- are used by the installed headers for GNU glibc and other system
- libraries. They are NOT meant to be used to build third-party modules for
- your kernel. Use SRCPKGNAME-headers-* packages for that.

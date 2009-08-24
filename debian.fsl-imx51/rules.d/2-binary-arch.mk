@@ -200,14 +200,14 @@ binary-arch-headers: install-arch-headers
 	dh_testdir
 	dh_testroot
 
-	dh_installchangelogs -p$(src_pkg_name)-libc-dev
-	dh_installdocs -p$(src_pkg_name)-libc-dev
-	dh_compress -p$(src_pkg_name)-libc-dev
-	dh_fixperms -p$(src_pkg_name)-libc-dev
-	dh_installdeb -p$(src_pkg_name)-libc-dev
-	dh_gencontrol -p$(src_pkg_name)-libc-dev
-	dh_md5sums -p$(src_pkg_name)-libc-dev
-	dh_builddeb -p$(src_pkg_name)-libc-dev
+#	dh_installchangelogs -p$(src_pkg_name)-libc-dev
+#	dh_installdocs -p$(src_pkg_name)-libc-dev
+#	dh_compress -p$(src_pkg_name)-libc-dev
+#	dh_fixperms -p$(src_pkg_name)-libc-dev
+#	dh_installdeb -p$(src_pkg_name)-libc-dev
+#	dh_gencontrol -p$(src_pkg_name)-libc-dev
+#	dh_md5sums -p$(src_pkg_name)-libc-dev
+#	dh_builddeb -p$(src_pkg_name)-libc-dev
 
 binary-%: pkgimg = $(bin_pkg_name)-$*
 binary-%: pkghdr = linux-headers-$(abi_release)-$*
