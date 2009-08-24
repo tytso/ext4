@@ -35,6 +35,12 @@ binary: binary-indep binary-arch
 
 build: build-arch build-indep
 
+distclean:
+	rm $(DEBIAN)/control $(DEBIAN)/control.stub \
+		$(DEBIAN)/d-i/kernel-versions debian/control \
+		debian/control.stub debian/changelog debian/copyright \
+		debian/debian.env
+
 clean: debian/control
 	dh_testdir
 	dh_testroot
