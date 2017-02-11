@@ -27,7 +27,6 @@
  *   - ext4*_error() should be used in some situations
  *   - analyze all BUG()/BUG_ON(), use -EIO where appropriate
  *   - smart tree reduction
- *    stable boundary change
  */
 
 #include <linux/fs.h>
