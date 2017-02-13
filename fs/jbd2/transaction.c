@@ -894,6 +894,8 @@ repeat:
 	    jh->b_next_transaction == transaction)
 		goto done;
 
+	jh->b_jflags = journal->j_flags;
+
 	/*
 	 * this is the first time this transaction is touching this buffer,
 	 * reset the modified flag
@@ -1863,7 +1865,8 @@ static void __jbd2_journal_temp_unlink_buffer(struct journal_head *jh)
 
 	__blist_del_buffer(list, jh);
 	jh->b_jlist = BJ_None;
-	if (transaction && is_journal_aborted(transaction->t_journal))
+	if ((transaction && is_journal_aborted(transaction->t_journal)) ||
+	    (jh->b_jflags & JBD2_LAZY))
 		clear_buffer_jbddirty(bh);
 	else if (test_clear_buffer_jbddirty(bh))
 		mark_buffer_dirty(bh);	/* Expose it to the VM */

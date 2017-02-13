@@ -58,6 +58,11 @@ struct journal_head {
 	char *b_committed_data;
 
 	/*
+	 * Copy of journal->j_flags
+	 */
+	unsigned b_jflags;
+
+	/*
 	 * Pointer to the compound transaction which owns this buffer's
 	 * metadata: either the running transaction or the committing
 	 * transaction (if there is one).  Only applies to buffers on a
