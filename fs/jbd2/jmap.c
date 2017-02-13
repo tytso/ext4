@@ -39,7 +39,7 @@ int jbd2_init_transaction_infos(journal_t *journal)
 	}
 
 	for (i = 0; i < MAX_LIVE_TRANSACTIONS; ++i)
-		INIT_LIST_HEAD(&tis->buf[i].live_logblks);
+		INIT_LIST_HEAD(&tis->buf[i].live_blks);
 
 	journal->j_transaction_infos = tis;
 	return 0;
@@ -92,15 +92,26 @@ static int process_existing_mappings(journal_t *journal,
 		 * We are either deleting the entry because it was revoked, or
 		 * we are moving it to the live blocks list of this transaction.
 		 * In either case, we remove it from its existing list.
+		 * However, before removing it we check to see if this is an
+		 * entry in the live blocks list of the tail transaction a
+		 * pointer to whom is cached by the cleaner and update the
+		 * cached pointer if so.
 		 */
+		spin_lock(&journal->j_cleaner_ctx->pos_lock);
+		if (je == journal->j_cleaner_ctx->pos) {
+			journal->j_cleaner_ctx->pos = list_next_entry(je, list);
+			trace_jbd2_jmap_printf1("updating pos to",
+						(unsigned long long) journal->j_cleaner_ctx->pos);
+		}
 		list_del(&je->list);
+		spin_unlock(&journal->j_cleaner_ctx->pos_lock);
 
 		if (je->revoked) {
 			rb_erase(&je->rb_node, &journal->j_jmap);
 			kmem_cache_free(jbd2_jmap_cache, je);
 		} else {
 			trace_jbd2_jmap_replace(je, &mappings[i], t_idx);
-			fill_entry(je, &mappings[i], t_idx, &ti->live_logblks);
+			fill_entry(je, &mappings[i], t_idx, &ti->live_blks);
 		}
 	}
 	return nr_new;
@@ -162,8 +173,7 @@ static void add_new_mappings(journal_t *journal, struct transaction_info *ti,
 			else
 				BUG_ON(1);
 		}
-		fill_entry(new_entries[i], &mappings[i], t_idx,
-			&ti->live_logblks);
+		fill_entry(new_entries[i], &mappings[i], t_idx, &ti->live_blks);
 		rb_link_node(&new_entries[i]->rb_node, parent, p);
 		rb_insert_color(&new_entries[i]->rb_node, &journal->j_jmap);
 		trace_jbd2_jmap_insert(&mappings[i], t_idx);
@@ -190,7 +200,9 @@ int jbd2_transaction_infos_add(journal_t *journal, transaction_t *transaction,
 	 * We are possibly reusing space of an old transaction_info.  The old
 	 * transaction should not have any live blocks in it.
 	 */
-	BUG_ON(!list_empty(&ti->live_logblks));
+	BUG_ON(!list_empty(&ti->live_blks));
+
+	atomic_inc(&journal->j_cleaner_ctx->nr_txns_committed);
 
 	write_lock(&journal->j_jmap_lock);
 	nr_new = process_existing_mappings(journal, ti, t_idx, mappings,
@@ -435,11 +447,31 @@ int jbd2_smr_journal_init(journal_t *journal)
 {
 	journal->j_jmap = RB_ROOT;
 	rwlock_init(&journal->j_jmap_lock);
+	journal->j_cleaner_ctx = kzalloc(sizeof(struct cleaner_ctx),
+					 GFP_KERNEL);
+	if (!journal->j_cleaner_ctx)
+		return -ENOMEM;
+
+	journal->j_cleaner_ctx->journal = journal;
+	journal->j_cleaner_ctx->pos = NULL;
+	spin_lock_init(&journal->j_cleaner_ctx->pos_lock);
+	atomic_set(&journal->j_cleaner_ctx->cleaning, 0);
+	atomic_set(&journal->j_cleaner_ctx->batch_in_progress, 0);
+	atomic_set(&journal->j_cleaner_ctx->nr_pending_reads, 0);
+	atomic_set(&journal->j_cleaner_ctx->nr_txns_committed, 0);
+	atomic_set(&journal->j_cleaner_ctx->nr_txns_cleaned, 0);
+	init_completion(&journal->j_cleaner_ctx->live_block_reads);
 	return jbd2_init_transaction_infos(journal);
 }
 
 void jbd2_smr_journal_exit(journal_t *journal)
 {
+	if (journal->j_cleaner_ctx) {
+		atomic_set(&journal->j_cleaner_ctx->cleaning, 0);
+		flush_work(&journal->j_cleaner_ctx->work);
+		kfree(journal->j_cleaner_ctx);
+		journal->j_cleaner_ctx = NULL;
+	}
 	jbd2_free_transaction_infos(journal);
 }
 

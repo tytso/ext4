@@ -227,6 +227,15 @@ loop:
 	}
 
 	wake_up(&journal->j_wait_done_commit);
+
+	if ((journal->j_flags & JBD2_LAZY) &&
+	    (cleaning(journal) || low_on_space(journal))) {
+		if (try_to_move_tail(journal) && high_on_space(journal))
+			stop_cleaning(journal);
+		else
+			start_cleaning(journal);
+	}
+
 	if (freezing(current)) {
 		/*
 		 * The simpler the better. Flushing journal isn't a
@@ -254,6 +263,9 @@ loop:
 						transaction->t_expires))
 			should_sleep = 0;
 		if (journal->j_flags & JBD2_UNMOUNT)
+			should_sleep = 0;
+		if ((journal->j_flags & JBD2_LAZY) &&
+		    cleaning_batch_complete(journal))
 			should_sleep = 0;
 		if (should_sleep) {
 			write_unlock(&journal->j_state_lock);

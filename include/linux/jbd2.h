@@ -735,7 +735,8 @@ jbd2_time_diff(unsigned long start, unsigned long end)
  * @j_superblock: Second part of superblock buffer
  * @j_map: A map from file system blocks to log blocks
  * @j_transaction_infos: An array of information structures per live transaction
- * @j_map_lock: Protect j_jmap and j_transaction_infos
+ * @j_jmap_lock: Protect j_jmap and j_transaction_infos
+ * @j_cleaner_ctx: Cleaner state
  * @j_format_version: Version of the superblock format
  * @j_state_lock: Protect the various scalars in the journal
  * @j_barrier_count:  Number of processes waiting to create a barrier lock
@@ -819,6 +820,9 @@ struct journal_s
 
 	/* Protect j_jmap and j_transaction_infos */
 	rwlock_t		j_jmap_lock;
+
+	/* Cleaner state */
+	struct cleaner_ctx	*j_cleaner_ctx;
 
 	/* Version of the superblock format */
 	int			j_format_version;
