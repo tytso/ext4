@@ -995,13 +995,15 @@ struct buffer_head *ext4_bread(handle_t *handle, struct inode *inode,
 			       ext4_lblk_t block, int map_flags)
 {
 	struct buffer_head *bh;
+	journal_t *journal = EXT4_SB(inode->i_sb)->s_journal;
 
 	bh = ext4_getblk(handle, inode, block, map_flags);
 	if (IS_ERR(bh))
 		return bh;
 	if (!bh || buffer_uptodate(bh))
 		return bh;
-	ll_rw_block(REQ_OP_READ, REQ_META | REQ_PRIO, 1, &bh);
+	jbd2_ll_rw_block(journal, REQ_OP_READ, REQ_META | REQ_PRIO, 1, &bh,
+			 __func__);
 	wait_on_buffer(bh);
 	if (buffer_uptodate(bh))
 		return bh;
@@ -4343,6 +4345,7 @@ static int __ext4_get_inode_loc(struct inode *inode,
 	struct super_block	*sb = inode->i_sb;
 	ext4_fsblk_t		block;
 	int			inodes_per_block, inode_offset;
+	journal_t		*journal = EXT4_SB(sb)->s_journal;
 
 	iloc->bh = NULL;
 	if (!ext4_valid_inum(sb, inode->i_ino))
@@ -4446,8 +4449,10 @@ make_io:
 			table += num / inodes_per_block;
 			if (end > table)
 				end = table;
-			while (b <= end)
-				sb_breadahead(sb, b++);
+			if (journal) {
+				while (b <= end)
+					jbd2_sb_breadahead(journal, sb, b++);
+			}
 		}
 
 		/*
@@ -4458,7 +4463,8 @@ make_io:
 		trace_ext4_load_inode(inode);
 		get_bh(bh);
 		bh->b_end_io = end_buffer_read_sync;
-		submit_bh(REQ_OP_READ, REQ_META | REQ_PRIO, bh);
+		jbd2_submit_bh(journal, REQ_OP_READ, REQ_META | REQ_PRIO, bh,
+			       __func__);
 		wait_on_buffer(bh);
 		if (!buffer_uptodate(bh)) {
 			EXT4_ERROR_INODE_BLOCK(inode, block,

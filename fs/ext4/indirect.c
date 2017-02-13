@@ -145,6 +145,7 @@ static Indirect *ext4_get_branch(struct inode *inode, int depth,
 				 Indirect chain[4], int *err)
 {
 	struct super_block *sb = inode->i_sb;
+	journal_t *journal = EXT4_SB(sb)->s_journal;
 	Indirect *p = chain;
 	struct buffer_head *bh;
 	int ret = -EIO;
@@ -162,7 +163,7 @@ static Indirect *ext4_get_branch(struct inode *inode, int depth,
 		}
 
 		if (!bh_uptodate_or_lock(bh)) {
-			if (bh_submit_read(bh) < 0) {
+			if (jbd2_bh_submit_read(journal, bh, __func__) < 0) {
 				put_bh(bh);
 				goto failure;
 			}

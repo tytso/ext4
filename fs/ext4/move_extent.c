@@ -177,6 +177,7 @@ static int
 mext_page_mkuptodate(struct page *page, unsigned from, unsigned to)
 {
 	struct inode *inode = page->mapping->host;
+	journal_t *journal = EXT4_SB(inode->i_sb)->s_journal;
 	sector_t block;
 	struct buffer_head *bh, *head, *arr[MAX_BUF_PER_PAGE];
 	unsigned int blocksize, block_start, block_end;
@@ -225,7 +226,7 @@ mext_page_mkuptodate(struct page *page, unsigned from, unsigned to)
 	for (i = 0; i < nr; i++) {
 		bh = arr[i];
 		if (!bh_uptodate_or_lock(bh)) {
-			err = bh_submit_read(bh);
+			err = jbd2_bh_submit_read(journal, bh, __func__);
 			if (err)
 				return err;
 		}

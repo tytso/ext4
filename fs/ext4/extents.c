@@ -517,6 +517,7 @@ __read_extent_tree_block(const char *function, unsigned int line,
 {
 	struct buffer_head		*bh;
 	int				err;
+	journal_t *journal = EXT4_SB(inode->i_sb)->s_journal;
 
 	bh = sb_getblk_gfp(inode->i_sb, pblk, __GFP_MOVABLE | GFP_NOFS);
 	if (unlikely(!bh))
@@ -524,7 +525,7 @@ __read_extent_tree_block(const char *function, unsigned int line,
 
 	if (!bh_uptodate_or_lock(bh)) {
 		trace_ext4_ext_load_extent(inode, pblk, _RET_IP_);
-		err = bh_submit_read(bh);
+		err = jbd2_bh_submit_read(journal, bh, __func__);
 		if (err < 0)
 			goto errout;
 	}

@@ -1361,6 +1361,7 @@ static struct buffer_head * ext4_find_entry (struct inode *dir,
 	struct buffer_head *bh_use[NAMEI_RA_SIZE];
 	struct buffer_head *bh, *ret = NULL;
 	ext4_lblk_t start, block, b;
+	journal_t *journal;
 	const u8 *name = d_name->name;
 	int ra_max = 0;		/* Number of bh's in the readahead
 				   buffer, bh_use[] */
@@ -1373,6 +1374,7 @@ static struct buffer_head * ext4_find_entry (struct inode *dir,
 
 	*res_dir = NULL;
 	sb = dir->i_sb;
+	journal = EXT4_SB(sb)->s_journal;
 	namelen = d_name->len;
 	if (namelen > EXT4_NAME_LEN)
 		return NULL;
@@ -1451,9 +1453,9 @@ restart:
 				}
 				bh_use[ra_max] = bh;
 				if (bh)
-					ll_rw_block(REQ_OP_READ,
-						    REQ_META | REQ_PRIO,
-						    1, &bh);
+					jbd2_ll_rw_block(journal, REQ_OP_READ,
+							 REQ_META | REQ_PRIO,
+							 1, &bh, __func__);
 			}
 		}
 		if ((bh = bh_use[ra_ptr++]) == NULL)

@@ -1193,10 +1193,12 @@ static int ext4_add_new_descs(handle_t *handle, struct super_block *sb,
 static struct buffer_head *ext4_get_bitmap(struct super_block *sb, __u64 block)
 {
 	struct buffer_head *bh = sb_getblk(sb, block);
+	journal_t *journal = EXT4_SB(sb)->s_journal;
+
 	if (unlikely(!bh))
 		return NULL;
 	if (!bh_uptodate_or_lock(bh)) {
-		if (bh_submit_read(bh) < 0) {
+		if (jbd2_bh_submit_read(journal, bh, __func__) < 0) {
 			brelse(bh);
 			return NULL;
 		}

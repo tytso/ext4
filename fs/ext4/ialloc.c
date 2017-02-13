@@ -14,6 +14,7 @@
 
 #include <linux/time.h>
 #include <linux/fs.h>
+#include <linux/jbd2.h>
 #include <linux/stat.h>
 #include <linux/string.h>
 #include <linux/quotaops.h>
@@ -160,6 +161,7 @@ ext4_read_inode_bitmap(struct super_block *sb, ext4_group_t block_group)
 	struct buffer_head *bh = NULL;
 	ext4_fsblk_t bitmap_blk;
 	int err;
+	journal_t *journal = EXT4_SB(sb)->s_journal;
 
 	desc = ext4_get_group_desc(sb, block_group, NULL);
 	if (!desc)
@@ -214,7 +216,8 @@ ext4_read_inode_bitmap(struct super_block *sb, ext4_group_t block_group)
 	trace_ext4_load_inode_bitmap(sb, block_group);
 	bh->b_end_io = ext4_end_bitmap_read;
 	get_bh(bh);
-	submit_bh(REQ_OP_READ, REQ_META | REQ_PRIO, bh);
+	jbd2_submit_bh(journal, REQ_OP_READ, REQ_META | REQ_PRIO, bh, __func__);
+
 	wait_on_buffer(bh);
 	if (!buffer_uptodate(bh)) {
 		put_bh(bh);
