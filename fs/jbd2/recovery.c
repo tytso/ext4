@@ -281,7 +281,7 @@ int jbd2_journal_recover(journal_t *journal)
 
 	/* Restart the log at the next transaction ID, thus invalidating
 	 * any existing commit records in the log. */
-	journal->j_transaction_sequence = ++info.end_transaction;
+	journal->j_transaction_sequence = info.end_transaction;
 
 	jbd2_journal_clear_revoke(journal);
 	err2 = sync_blockdev(journal->j_fs_dev);
