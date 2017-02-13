@@ -1120,15 +1120,17 @@ static journal_t *journal_init_common(struct block_device *bdev,
 	journal->j_max_batch_time = 15000; /* 15ms */
 	atomic_set(&journal->j_reserved_credits, 0);
 
+	err = jbd2_smr_journal_init(journal);
+	if (err)
+		goto out_err;
+
 	/* The journal is marked for error until we succeed with recovery! */
 	journal->j_flags = JBD2_ABORT;
 
 	/* Set up a default-sized revoke table for the new mount. */
 	err = jbd2_journal_init_revoke(journal, JOURNAL_REVOKE_DEFAULT_HASH);
-	if (err) {
-		kfree(journal);
-		return NULL;
-	}
+	if (err)
+		goto out_err;
 
 	spin_lock_init(&journal->j_history_lock);
 
@@ -1162,6 +1164,9 @@ static journal_t *journal_init_common(struct block_device *bdev,
 	journal->j_superblock = (journal_superblock_t *)bh->b_data;
 
 	return journal;
+out_err:
+	kfree(journal);
+	return NULL;
 }
 
 /* jbd2_journal_init_dev and jbd2_journal_init_inode:
@@ -1741,6 +1746,7 @@ int jbd2_journal_destroy(journal_t *journal)
 		jbd2_journal_destroy_revoke(journal);
 	if (journal->j_chksum_driver)
 		crypto_free_shash(journal->j_chksum_driver);
+	jbd2_smr_journal_exit(journal);
 	kfree(journal->j_wbuf);
 	kfree(journal);
 
@@ -2641,6 +2647,8 @@ static int __init journal_init_caches(void)
 		ret = jbd2_journal_init_handle_cache();
 	if (ret == 0)
 		ret = jbd2_journal_init_transaction_cache();
+	if (ret == 0)
+		ret = jbd2_journal_init_jmap_cache();
 	return ret;
 }
 
@@ -2650,6 +2658,7 @@ static void jbd2_journal_destroy_caches(void)
 	jbd2_journal_destroy_journal_head_cache();
 	jbd2_journal_destroy_handle_cache();
 	jbd2_journal_destroy_transaction_cache();
+	jbd2_journal_destroy_jmap_cache();
 	jbd2_journal_destroy_slabs();
 }
 

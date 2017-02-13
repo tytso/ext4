@@ -362,6 +362,8 @@ void jbd2_journal_commit_transaction(journal_t *journal)
 	int flags;
 	int err;
 	unsigned long long blocknr;
+	struct blk_mapping *mappings = NULL;
+	struct blk_mapping *map_ptr = NULL;
 	ktime_t start_time;
 	u64 commit_time;
 	char *tagp = NULL;
@@ -563,6 +565,14 @@ void jbd2_journal_commit_transaction(journal_t *journal)
 	J_ASSERT(commit_transaction->t_nr_buffers <=
 		 atomic_read(&commit_transaction->t_outstanding_credits));
 
+	if (journal->j_flags & JBD2_LAZY) {
+		int nr_mappings = commit_transaction->t_nr_buffers;
+
+		map_ptr = mappings = kmalloc(sizeof(*mappings) * nr_mappings, GFP_NOFS);
+		if (!mappings)
+			jbd2_journal_abort(journal, -ENOMEM);
+	}
+
 	err = 0;
 	bufs = 0;
 	descriptor = NULL;
@@ -661,6 +671,11 @@ void jbd2_journal_commit_transaction(journal_t *journal)
 			continue;
 		}
 		jbd2_file_log_bh(&io_bufs, wbuf[bufs]);
+		if (map_ptr) {
+			map_ptr->fsblk = jh2bh(jh)->b_blocknr;
+			map_ptr->logblk = blocknr;
+			map_ptr++;
+		}
 
 		/* Record the new block's tag in the current descriptor
                    buffer */
@@ -894,6 +909,14 @@ start_journal_io:
            processing: any buffers committed as a result of this
            transaction can be removed from any checkpoint list it was on
            before. */
+
+	if (mappings) {
+		err = jbd2_transaction_infos_add(journal, commit_transaction,
+						 mappings, map_ptr - mappings);
+		if (err)
+			jbd2_journal_abort(journal, -ENOMEM);
+		kfree(mappings);
+	}
 
 	jbd_debug(3, "JBD2: commit phase 6\n");
 

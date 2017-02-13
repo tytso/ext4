@@ -379,6 +379,175 @@ TRACE_EVENT(jbd2_lock_buffer_stall,
 		__entry->stall_ms)
 );
 
+TRACE_EVENT(jbd2_jmap_replace,
+
+	TP_PROTO(struct jmap_entry *jentry, struct blk_mapping *mapping, \
+		int t_idx),
+
+	TP_ARGS(jentry, mapping, t_idx),
+
+	TP_STRUCT__entry(
+		__field(sector_t, fsblk		)
+		__field(sector_t, old_logblk	)
+		__field(sector_t, new_logblk	)
+		__field(int, old_t_idx		)
+		__field(int, new_t_idx		)
+	),
+
+	TP_fast_assign(
+		__entry->fsblk		= mapping->fsblk;
+		__entry->old_logblk	= jentry->mapping.logblk;
+		__entry->new_logblk	= mapping->logblk;
+		__entry->old_t_idx       = jentry->t_idx;
+		__entry->new_t_idx       = t_idx;
+	),
+
+	TP_printk("remap %llu from %llu to %llu, move from transaction at index %d to transaction at index %d",
+		  (unsigned long long) __entry->fsblk,
+		  (unsigned long long) __entry->old_logblk,
+		  (unsigned long long) __entry->new_logblk,
+		  __entry->old_t_idx,
+		  __entry->new_t_idx)
+);
+
+TRACE_EVENT(jbd2_jmap_insert,
+
+	TP_PROTO(struct blk_mapping *mapping, int t_idx),
+
+	TP_ARGS(mapping, t_idx),
+
+	TP_STRUCT__entry(
+		__field(sector_t, fsblk	)
+		__field(sector_t, logblk)
+		__field(int, t_idx)
+	),
+
+	TP_fast_assign(
+		__entry->fsblk	= mapping->fsblk;
+		__entry->logblk	= mapping->logblk;
+		__entry->t_idx = t_idx;
+	),
+
+	TP_printk("map %llu to %llu, insert to transaction %d",
+		  (unsigned long long) __entry->fsblk,
+		  (unsigned long long) __entry->logblk,
+		  __entry->t_idx)
+);
+
+TRACE_EVENT(jbd2_jmap_lookup,
+
+	TP_PROTO(sector_t fsblk, sector_t logblk, const char *func),
+
+	TP_ARGS(fsblk, logblk, func),
+
+	TP_STRUCT__entry(
+		__field(sector_t, fsblk	)
+		__field(sector_t, logblk)
+		__string(func, func)
+	),
+
+	TP_fast_assign(
+		__entry->fsblk	= fsblk;
+		__entry->logblk	= logblk;
+		__assign_str(func, func);
+	),
+
+	TP_printk("%s: lookup %llu -> %llu",
+		  __get_str(func),
+		  (unsigned long long) __entry->fsblk,
+		  (unsigned long long) __entry->logblk)
+);
+
+TRACE_EVENT(jbd2_jmap_printf,
+
+	TP_PROTO(const char *s),
+
+	TP_ARGS(s),
+
+	TP_STRUCT__entry(
+		__string(s, s)
+	),
+
+	TP_fast_assign(
+		__assign_str(s, s);
+	),
+
+	TP_printk("%s",
+		__get_str(s))
+);
+
+TRACE_EVENT(jbd2_jmap_printf1,
+
+	TP_PROTO(const char *s, sector_t fsblk),
+
+	TP_ARGS(s, fsblk),
+
+	TP_STRUCT__entry(
+		__string(s, s)
+		__field(sector_t, fsblk	)
+	),
+
+	TP_fast_assign(
+		__assign_str(s, s);
+		__entry->fsblk	= fsblk;
+	),
+
+	TP_printk("%s: %llu",
+		  __get_str(s),
+		  (unsigned long long) __entry->fsblk)
+);
+
+TRACE_EVENT(jbd2_jmap_printf2,
+
+	TP_PROTO(const char *s, sector_t fsblk, sector_t logblk),
+
+	TP_ARGS(s, fsblk, logblk),
+
+	TP_STRUCT__entry(
+		__string(s, s)
+		__field(sector_t, fsblk	)
+		__field(sector_t, logblk)
+	),
+
+	TP_fast_assign(
+		__assign_str(s, s);
+		__entry->fsblk	= fsblk;
+		__entry->logblk	= logblk;
+	),
+
+	TP_printk("%s: %llu:%llu",
+		  __get_str(s),
+		  (unsigned long long) __entry->fsblk,
+		  (unsigned long long) __entry->logblk)
+);
+
+TRACE_EVENT(jbd2_transaction_infos_add,
+
+	TP_PROTO(int t_idx, struct transaction_info *ti, int nr_mappings),
+
+	TP_ARGS(t_idx, ti, nr_mappings),
+
+	TP_STRUCT__entry(
+		__field(int, t_idx	)
+		__field(tid_t, tid	)
+		__field(sector_t, offset)
+		__field(int, nr_mappings)
+	),
+
+	TP_fast_assign(
+		__entry->t_idx	= t_idx;
+		__entry->tid	= ti->tid;
+		__entry->offset = ti->offset;
+		__entry->nr_mappings = nr_mappings;
+	),
+
+	TP_printk("inserted transaction %u (offset %llu) at index %d with %d mappings",
+		  __entry->tid,
+		  (unsigned long long) __entry->offset,
+		  __entry->t_idx,
+		  __entry->nr_mappings)
+);
+
 #endif /* _TRACE_JBD2_H */
 
 /* This part must be outside protection */

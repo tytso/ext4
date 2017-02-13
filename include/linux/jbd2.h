@@ -25,6 +25,7 @@
 #include <linux/types.h>
 #include <linux/buffer_head.h>
 #include <linux/journal-head.h>
+#include <linux/jmap.h>
 #include <linux/stddef.h>
 #include <linux/mutex.h>
 #include <linux/timer.h>
@@ -732,6 +733,9 @@ jbd2_time_diff(unsigned long start, unsigned long end)
  *     prior abort)?
  * @j_sb_buffer: First part of superblock buffer
  * @j_superblock: Second part of superblock buffer
+ * @j_map: A map from file system blocks to log blocks
+ * @j_transaction_infos: An array of information structures per live transaction
+ * @j_map_lock: Protect j_jmap and j_transaction_infos
  * @j_format_version: Version of the superblock format
  * @j_state_lock: Protect the various scalars in the journal
  * @j_barrier_count:  Number of processes waiting to create a barrier lock
@@ -806,6 +810,15 @@ struct journal_s
 	/* The superblock buffer */
 	struct buffer_head	*j_sb_buffer;
 	journal_superblock_t	*j_superblock;
+
+	/* A map from file system blocks to journal blocks */
+	struct rb_root		j_jmap;
+
+	/* An array of housekeeping information about live transactions */
+	struct transaction_infos *j_transaction_infos;
+
+	/* Protect j_jmap and j_transaction_infos */
+	rwlock_t		j_jmap_lock;
 
 	/* Version of the superblock format */
 	int			j_format_version;
@@ -1129,6 +1142,7 @@ JBD2_FEATURE_INCOMPAT_FUNCS(csum3,		CSUM_V3)
 						 * mode */
 #define JBD2_REC_ERR	0x080	/* The errno in the sb has been recorded */
 #define JBD2_NO_CLEANUP	0x100	/* Don't flush empty the journal on shutdown  */
+#define JBD2_LAZY	0x200	/* Do lazy journalling  */
 
 /*
  * Function declarations for the journaling transaction and buffer
