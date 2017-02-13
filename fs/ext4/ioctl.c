@@ -242,6 +242,20 @@ static int ext4_ioctl_setflags(struct inode *inode,
 		if (!capable(CAP_SYS_RESOURCE))
 			goto flags_out;
 	}
+
+	/*
+	 * Clearing the JOURNAL_DATA flag is *hard* with lazy
+	 * journalling.  We can't use jbd2_journal_flush(); instead,
+	 * we would have to make sure all blocks belonging to the file
+	 * are evacuated from the journal and saved to their final
+	 * location on disk.  Punt for now.
+	 */
+	if ((oldflags & EXT4_JOURNAL_DATA_FL) && !jflag &&
+	    test_opt(inode->i_sb, JOURNAL_LAZY)) {
+		err = -EOPNOTSUPP;
+		goto flags_out;
+	}
+
 	if ((flags ^ oldflags) & EXT4_EXTENTS_FL)
 		migrate = 1;
 
@@ -489,6 +503,22 @@ int ext4_goingdown(struct super_block *sb, unsigned long arg)
 	return 0;
 }
 
+/*
+ * If we are using journalling (excepting JBD2 lazy mode), make sure
+ * the block group descriptors are written out immediately
+ */
+static int flush_fs_group_descriptors(struct super_block *sb)
+{
+	int err = 0;
+
+	if (EXT4_SB(sb)->s_journal && !test_opt(sb, JOURNAL_LAZY)) {
+		jbd2_journal_lock_updates(EXT4_SB(sb)->s_journal);
+		err = jbd2_journal_flush(EXT4_SB(sb)->s_journal);
+		jbd2_journal_unlock_updates(EXT4_SB(sb)->s_journal);
+	}
+	return err;
+}
+
 long ext4_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
 	struct inode *inode = file_inode(filp);
@@ -606,11 +636,7 @@ setversion_out:
 			goto group_extend_out;
 
 		err = ext4_group_extend(sb, EXT4_SB(sb)->s_es, n_blocks_count);
-		if (EXT4_SB(sb)->s_journal) {
-			jbd2_journal_lock_updates(EXT4_SB(sb)->s_journal);
-			err2 = jbd2_journal_flush(EXT4_SB(sb)->s_journal);
-			jbd2_journal_unlock_updates(EXT4_SB(sb)->s_journal);
-		}
+		err2 = flush_fs_group_descriptors(sb);
 		if (err == 0)
 			err = err2;
 		mnt_drop_write_file(filp);
@@ -696,11 +722,7 @@ mext_out:
 			goto group_add_out;
 
 		err = ext4_group_add(sb, &input);
-		if (EXT4_SB(sb)->s_journal) {
-			jbd2_journal_lock_updates(EXT4_SB(sb)->s_journal);
-			err2 = jbd2_journal_flush(EXT4_SB(sb)->s_journal);
-			jbd2_journal_unlock_updates(EXT4_SB(sb)->s_journal);
-		}
+		err2 = flush_fs_group_descriptors(sb);
 		if (err == 0)
 			err = err2;
 		mnt_drop_write_file(filp);
@@ -786,11 +808,7 @@ group_add_out:
 			goto resizefs_out;
 
 		err = ext4_resize_fs(sb, n_blocks_count);
-		if (EXT4_SB(sb)->s_journal) {
-			jbd2_journal_lock_updates(EXT4_SB(sb)->s_journal);
-			err2 = jbd2_journal_flush(EXT4_SB(sb)->s_journal);
-			jbd2_journal_unlock_updates(EXT4_SB(sb)->s_journal);
-		}
+		err2 = flush_fs_group_descriptors(sb);
 		if (err == 0)
 			err = err2;
 		mnt_drop_write_file(filp);

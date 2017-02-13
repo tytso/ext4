@@ -3188,7 +3188,7 @@ static sector_t ext4_bmap(struct address_space *mapping, sector_t block)
 		filemap_write_and_wait(mapping);
 	}
 
-	if (EXT4_JOURNAL(inode) &&
+	if (EXT4_JOURNAL(inode) && !test_opt(inode->i_sb, JOURNAL_LAZY) &&
 	    ext4_test_inode_state(inode, EXT4_STATE_JDATA)) {
 		/*
 		 * This is a REALLY heavyweight approach, but the use of

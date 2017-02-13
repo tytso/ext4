@@ -1309,6 +1309,7 @@ enum {
 	Opt_inode_readahead_blks, Opt_journal_ioprio,
 	Opt_dioread_nolock, Opt_dioread_lock,
 	Opt_journal_nocleanup, Opt_journal_cleanup,
+	Opt_journal_nolazy, Opt_journal_lazy,
 	Opt_discard, Opt_nodiscard, Opt_init_itable, Opt_noinit_itable,
 	Opt_max_dir_size_kb, Opt_nojournal_checksum,
 };
@@ -1395,6 +1396,8 @@ static const match_table_t tokens = {
 	{Opt_test_dummy_encryption, "test_dummy_encryption"},
 	{Opt_journal_nocleanup, "journal_nocleanup"},
 	{Opt_journal_cleanup, "journal_cleanup"},
+	{Opt_journal_lazy, "journal_lazy"},
+	{Opt_journal_nolazy, "journal_nolazy"},
 	{Opt_removed, "check=none"},	/* mount option from ext2/3 */
 	{Opt_removed, "nocheck"},	/* mount option from ext2/3 */
 	{Opt_removed, "reservation"},	/* mount option from ext2/3 */
@@ -1603,6 +1606,8 @@ static const struct mount_opts {
 	{Opt_test_dummy_encryption, 0, MOPT_GTE0},
 	{Opt_journal_nocleanup, EXT4_MOUNT_JOURNAL_NO_CLEANUP, MOPT_SET},
 	{Opt_journal_cleanup, EXT4_MOUNT_JOURNAL_NO_CLEANUP, MOPT_CLEAR},
+	{Opt_journal_lazy, EXT4_MOUNT_JOURNAL_LAZY, MOPT_SET},
+	{Opt_journal_nolazy, EXT4_MOUNT_JOURNAL_LAZY, MOPT_CLEAR},
 	{Opt_err, 0, 0}
 };
 
@@ -4337,6 +4342,10 @@ static void ext4_init_journal_params(struct super_block *sb, journal_t *journal)
 		journal->j_flags |= JBD2_NO_CLEANUP;
 	else
 		journal->j_flags &= ~JBD2_NO_CLEANUP;
+	if (test_opt(sb, JOURNAL_LAZY))
+		journal->j_flags |= JBD2_LAZY;
+	else
+		journal->j_flags &= ~JBD2_LAZY;
 	write_unlock(&journal->j_state_lock);
 }
 
@@ -4801,21 +4810,20 @@ static int ext4_freeze(struct super_block *sb)
 	journal = EXT4_SB(sb)->s_journal;
 
 	if (journal) {
-		/* Now we set up the journal barrier. */
+		/*
+		 * Set the journal barrier, then flush the journal and
+		 * clear the needs_recovery flag if we are not in
+		 * JBD2_LAZY mode.
+		 */
 		jbd2_journal_lock_updates(journal);
 
-		/*
-		 * Don't clear the needs_recovery flag if we failed to
-		 * flush the journal.
-		 */
-		error = jbd2_journal_flush(journal);
-		if (error < 0)
-			goto out;
-
-		/* Journal blocked and flushed, clear needs_recovery flag. */
+		if (!test_opt(sb, JOURNAL_LAZY)) {
+			error = jbd2_journal_flush(journal);
+			if (error < 0)
+				goto out;
+		}
 		ext4_clear_feature_journal_needs_recovery(sb);
 	}
-
 	error = ext4_commit_super(sb, 1);
 out:
 	if (journal)
@@ -4833,7 +4841,7 @@ static int ext4_unfreeze(struct super_block *sb)
 	if ((sb->s_flags & MS_RDONLY) || ext4_forced_shutdown(EXT4_SB(sb)))
 		return 0;
 
-	if (EXT4_SB(sb)->s_journal) {
+	if (EXT4_SB(sb)->s_journal && !test_opt(sb, JOURNAL_LAZY)) {
 		/* Reset the needs_recovery flag before the fs is unlocked. */
 		ext4_set_feature_journal_needs_recovery(sb);
 	}
@@ -5349,6 +5357,8 @@ static int ext4_quota_on(struct super_block *sb, int type, int format_id,
 		 * We don't need to lock updates but journal_flush() could
 		 * otherwise be livelocked...
 		 */
+		if (test_opt(sb, JOURNAL_LAZY))
+			return -EOPNOTSUPP;
 		jbd2_journal_lock_updates(EXT4_SB(sb)->s_journal);
 		err = jbd2_journal_flush(EXT4_SB(sb)->s_journal);
 		jbd2_journal_unlock_updates(EXT4_SB(sb)->s_journal);
