@@ -902,8 +902,8 @@ start_journal_io:
 	 * erase checkpointed transactions from the log by updating journal
 	 * superblock.
 	 */
-	if (update_tail)
-		jbd2_update_log_tail(journal, first_tid, first_block);
+	/* if (update_tail) */
+	/* 	jbd2_update_log_tail(journal, first_tid, first_block); */
 
 	/* End of a transaction!  Finally, we can do checkpoint
            processing: any buffers committed as a result of this

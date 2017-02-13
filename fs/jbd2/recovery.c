@@ -32,6 +32,7 @@ struct recovery_info
 {
 	tid_t		start_transaction;
 	tid_t		end_transaction;
+	int		tail_block;
 
 	int		nr_replays;
 	int		nr_revokes;
@@ -282,6 +283,8 @@ int jbd2_journal_recover(journal_t *journal)
 	/* Restart the log at the next transaction ID, thus invalidating
 	 * any existing commit records in the log. */
 	journal->j_transaction_sequence = info.end_transaction;
+	journal->j_tail = info.tail_block;
+	journal->j_head = info.tail_block;
 
 	jbd2_journal_clear_revoke(journal);
 	err2 = sync_blockdev(journal->j_fs_dev);
@@ -484,9 +487,6 @@ static int do_one_pass(journal_t *journal,
 		if (err)
 			goto failed;
 
-		next_log_block++;
-		wrap(journal, next_log_block);
-
 		/* What kind of buffer is it?
 		 *
 		 * If it is a descriptor block, check that it has the
@@ -513,6 +513,9 @@ static int do_one_pass(journal_t *journal,
 		/* OK, we have a valid descriptor block which matches
 		 * all of the sequence number checks.  What are we going
 		 * to do with it?  That depends on the pass... */
+
+		next_log_block++;
+		wrap(journal, next_log_block);
 
 		switch(blocktype) {
 		case JBD2_DESCRIPTOR_BLOCK:
@@ -578,7 +581,7 @@ static int do_one_pass(journal_t *journal,
 						"block %ld in log\n",
 						err, io_block);
 				} else {
-					unsigned long long blocknr;
+					unsigned long long blocknr, log_block;
 
 					J_ASSERT(obh != NULL);
 					blocknr = read_tag_block(journal,
@@ -608,6 +611,19 @@ static int do_one_pass(journal_t *journal,
 						block_error = 1;
 						goto skip_write;
 					}
+
+					err = jbd2_journal_bmap(journal,
+								io_block,
+								&log_block);
+					J_ASSERT(!err);
+
+#if 0
+					if (!jbd2_metamap_insert(
+							journal,
+							blocknr,
+							log_block))
+						goto failed;
+#endif
 
 					/* Find a buffer for the new
 					 * data being restored */
@@ -791,6 +807,7 @@ static int do_one_pass(journal_t *journal,
 	if (pass == PASS_SCAN) {
 		if (!info->end_transaction)
 			info->end_transaction = next_commit_ID;
+		info->tail_block = next_log_block;
 	} else {
 		/* It's really bad news if different passes end up at
 		 * different places (but possible due to IO errors). */

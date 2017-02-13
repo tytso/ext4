@@ -4557,8 +4557,8 @@ static int ext4_load_journal(struct super_block *sb,
 	if (!(journal->j_flags & JBD2_BARRIER))
 		ext4_msg(sb, KERN_INFO, "barriers disabled");
 
-	if (!ext4_has_feature_journal_needs_recovery(sb))
-		err = jbd2_journal_wipe(journal, !really_read_only);
+	/* if (!ext4_has_feature_journal_needs_recovery(sb)) */
+	/* 	err = jbd2_journal_wipe(journal, !really_read_only); */
 	if (!err) {
 		char *save = kmalloc(EXT4_S_ERR_LEN, GFP_KERNEL);
 		if (save)

@@ -1296,9 +1296,6 @@ static int journal_reset(journal_t *journal)
 
 	journal->j_first = first;
 	journal->j_last = last;
-
-	journal->j_head = first;
-	journal->j_tail = first;
 	journal->j_free = last - first;
 
 	journal->j_tail_sequence = journal->j_transaction_sequence;
@@ -1314,12 +1311,15 @@ static int journal_reset(journal_t *journal)
 	 * attempting a write to a potential-readonly device.
 	 */
 	if (sb->s_start == 0) {
+		journal->j_head = first;
+		journal->j_tail = first;
 		jbd_debug(1, "JBD2: Skipping superblock update on recovered sb "
 			"(start %ld, seq %d, errno %d)\n",
 			journal->j_tail, journal->j_tail_sequence,
 			journal->j_errno);
 		journal->j_flags |= JBD2_FLUSHED;
 	} else {
+		#if 0
 		/* Lock here to make assertions happy... */
 		mutex_lock(&journal->j_checkpoint_mutex);
 		/*
@@ -1333,6 +1333,7 @@ static int journal_reset(journal_t *journal)
 						journal->j_tail,
 						REQ_FUA);
 		mutex_unlock(&journal->j_checkpoint_mutex);
+		#endif
 	}
 	return jbd2_journal_start_thread(journal);
 }
@@ -1441,8 +1442,8 @@ static void jbd2_mark_journal_empty(journal_t *journal, int write_op)
 	jbd_debug(1, "JBD2: Marking journal as empty (seq %d)\n",
 		  journal->j_tail_sequence);
 
-	sb->s_sequence = cpu_to_be32(journal->j_tail_sequence);
-	sb->s_start    = cpu_to_be32(0);
+	sb->s_sequence = cpu_to_be32(2);
+	sb->s_start    = cpu_to_be32(1);
 	read_unlock(&journal->j_state_lock);
 
 	jbd2_write_superblock(journal, write_op);
