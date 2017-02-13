@@ -1308,6 +1308,7 @@ enum {
 	Opt_nomblk_io_submit, Opt_block_validity, Opt_noblock_validity,
 	Opt_inode_readahead_blks, Opt_journal_ioprio,
 	Opt_dioread_nolock, Opt_dioread_lock,
+	Opt_journal_nocleanup, Opt_journal_cleanup,
 	Opt_discard, Opt_nodiscard, Opt_init_itable, Opt_noinit_itable,
 	Opt_max_dir_size_kb, Opt_nojournal_checksum,
 };
@@ -1392,6 +1393,8 @@ static const match_table_t tokens = {
 	{Opt_noinit_itable, "noinit_itable"},
 	{Opt_max_dir_size_kb, "max_dir_size_kb=%u"},
 	{Opt_test_dummy_encryption, "test_dummy_encryption"},
+	{Opt_journal_nocleanup, "journal_nocleanup"},
+	{Opt_journal_cleanup, "journal_cleanup"},
 	{Opt_removed, "check=none"},	/* mount option from ext2/3 */
 	{Opt_removed, "nocheck"},	/* mount option from ext2/3 */
 	{Opt_removed, "reservation"},	/* mount option from ext2/3 */
@@ -1598,6 +1601,8 @@ static const struct mount_opts {
 	{Opt_jqfmt_vfsv1, QFMT_VFS_V1, MOPT_QFMT},
 	{Opt_max_dir_size_kb, 0, MOPT_GTE0},
 	{Opt_test_dummy_encryption, 0, MOPT_GTE0},
+	{Opt_journal_nocleanup, EXT4_MOUNT_JOURNAL_NO_CLEANUP, MOPT_SET},
+	{Opt_journal_cleanup, EXT4_MOUNT_JOURNAL_NO_CLEANUP, MOPT_CLEAR},
 	{Opt_err, 0, 0}
 };
 
@@ -4328,6 +4333,10 @@ static void ext4_init_journal_params(struct super_block *sb, journal_t *journal)
 		journal->j_flags |= JBD2_ABORT_ON_SYNCDATA_ERR;
 	else
 		journal->j_flags &= ~JBD2_ABORT_ON_SYNCDATA_ERR;
+	if (test_opt(sb, JOURNAL_NO_CLEANUP))
+		journal->j_flags |= JBD2_NO_CLEANUP;
+	else
+		journal->j_flags &= ~JBD2_NO_CLEANUP;
 	write_unlock(&journal->j_state_lock);
 }
 

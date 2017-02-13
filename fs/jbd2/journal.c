@@ -1685,6 +1685,11 @@ int jbd2_journal_destroy(journal_t *journal)
 	if (journal->j_running_transaction)
 		jbd2_journal_commit_transaction(journal);
 
+	if (journal->j_flags & JBD2_NO_CLEANUP) {
+		jbd2_journal_destroy_checkpoint(journal);
+		journal->j_checkpoint_transactions = NULL;
+	}
+
 	/* Force any old transactions to disk */
 
 	/* Totally anal locking here... */
@@ -1712,7 +1717,9 @@ int jbd2_journal_destroy(journal_t *journal)
 	spin_unlock(&journal->j_list_lock);
 
 	if (journal->j_sb_buffer) {
-		if (!is_journal_aborted(journal)) {
+		if (is_journal_aborted(journal))
+			err = -EIO;
+		else if ((journal->j_flags & JBD2_NO_CLEANUP) == 0) {
 			mutex_lock(&journal->j_checkpoint_mutex);
 
 			write_lock(&journal->j_state_lock);
@@ -1723,8 +1730,7 @@ int jbd2_journal_destroy(journal_t *journal)
 			jbd2_mark_journal_empty(journal,
 					REQ_PREFLUSH | REQ_FUA);
 			mutex_unlock(&journal->j_checkpoint_mutex);
-		} else
-			err = -EIO;
+		}
 		brelse(journal->j_sb_buffer);
 	}
 

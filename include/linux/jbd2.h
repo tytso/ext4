@@ -1128,6 +1128,7 @@ JBD2_FEATURE_INCOMPAT_FUNCS(csum3,		CSUM_V3)
 						 * data write error in ordered
 						 * mode */
 #define JBD2_REC_ERR	0x080	/* The errno in the sb has been recorded */
+#define JBD2_NO_CLEANUP	0x100	/* Don't flush empty the journal on shutdown  */
 
 /*
  * Function declarations for the journaling transaction and buffer
