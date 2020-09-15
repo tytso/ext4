@@ -219,6 +219,7 @@ static void flush_end_io(struct request *flush_rq, blk_status_t error)
 	struct request *rq, *n;
 	unsigned long flags = 0;
 	struct blk_flush_queue *fq = blk_get_flush_queue(q, flush_rq->mq_ctx);
+	struct blk_mq_hw_ctx *hctx;
 
 	blk_account_io_flush(flush_rq);
 
@@ -234,11 +235,13 @@ static void flush_end_io(struct request *flush_rq, blk_status_t error)
 	if (fq->rq_status != BLK_STS_OK)
 		error = fq->rq_status;
 
+	hctx = flush_rq->mq_hctx;
 	if (!q->elevator) {
-		flush_rq->tag = BLK_MQ_NO_TAG;
+		blk_mq_tag_set_rq(hctx, flush_rq->tag, fq->orig_rq);
+		flush_rq->tag = -1;
 	} else {
 		blk_mq_put_driver_tag(flush_rq);
-		flush_rq->internal_tag = BLK_MQ_NO_TAG;
+		flush_rq->internal_tag = -1;
 	}
 
 	running = &fq->flush_queue[fq->flush_running_idx];
@@ -309,7 +312,7 @@ static void blk_kick_flush(struct request_queue *q, struct blk_flush_queue *fq,
 	flush_rq->mq_hctx = first_rq->mq_hctx;
 
 	if (!q->elevator) {
-		flush_rq->tag = first_rq->tag;
+		fq->orig_rq = first_rq;
 
 		/*
 		 * We borrow data request's driver tag, so have to mark
@@ -317,8 +320,10 @@ static void blk_kick_flush(struct request_queue *q, struct blk_flush_queue *fq,
 		 * account of this driver tag
 		 */
 		flush_rq->rq_flags |= RQF_MQ_INFLIGHT;
-	} else
+		blk_mq_tag_set_rq(flush_rq->mq_hctx, first_rq->tag, flush_rq);
+	} else {
 		flush_rq->internal_tag = first_rq->internal_tag;
+	}
 
 	flush_rq->cmd_flags = REQ_OP_FLUSH | REQ_PREFLUSH;
 	flush_rq->cmd_flags |= (flags & REQ_DRV) | (flags & REQ_FAILFAST_MASK);
