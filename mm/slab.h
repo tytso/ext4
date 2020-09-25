@@ -423,7 +423,8 @@ static inline struct kmem_cache *virt_to_cache(const void *obj)
 	return page->slab_cache;
 }
 
-static __always_inline void charge_slab_page(struct page *page, int order,
+static __always_inline void charge_slab_page(struct page *page,
+					     gfp_t gfp, int order,
 					     struct kmem_cache *s)
 {
 	mod_node_page_state(page_pgdat(page), cache_vmstat_idx(s),
