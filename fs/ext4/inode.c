@@ -5776,20 +5776,27 @@ ext4_reserve_inode_write(handle_t *handle, struct inode *inode,
 {
 	int err;
 
-	if (unlikely(ext4_forced_shutdown(inode->i_sb)))
-		return -EIO;
+	if (unlikely(ext4_forced_shutdown(inode->i_sb))) {
+		err = -EIO;
+		goto out;
+	}
 
 	err = ext4_get_inode_loc(inode, iloc);
-	if (!err) {
-		BUFFER_TRACE(iloc->bh, "get_write_access");
-		err = ext4_journal_get_write_access(handle, inode->i_sb,
-						    iloc->bh, EXT4_JTR_NONE);
-		if (err) {
-			brelse(iloc->bh);
-			iloc->bh = NULL;
-		}
-		ext4_fc_track_inode(handle, inode);
+	if (err)
+		goto out;
+
+	BUFFER_TRACE(iloc->bh, "get_write_access");
+	err = ext4_journal_get_write_access(handle, inode->i_sb,
+						iloc->bh, EXT4_JTR_NONE);
+	if (err) {
+		brelse(iloc->bh);
+		iloc->bh = NULL;
 	}
+	ext4_fc_track_inode(handle, inode);
+out:
+	if (err)
+		ext4_fc_mark_ineligible(inode->i_sb,
+			EXT4_FC_REASON_INODE_RSV_WRITE_FAIL, handle);
 	ext4_std_error(inode->i_sb, err);
 	return err;
 }
