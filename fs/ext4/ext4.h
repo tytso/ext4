@@ -3476,6 +3476,7 @@ struct ext4_group_info {
 	int		bb_avg_fragment_size_order;	/* order of average
 							   fragment in BG */
 	ext4_grpblk_t	bb_largest_free_order;/* order of largest frag in BG */
+	ext4_grpblk_t	bb_largest_free_order_idx; /* index of largest frag */
 	ext4_group_t	bb_group;	/* Group number */
 	struct          list_head bb_prealloc_list;
 #ifdef DOUBLE_CHECK
