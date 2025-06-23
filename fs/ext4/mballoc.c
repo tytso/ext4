@@ -2168,11 +2168,9 @@ static void ext4_mb_use_best_found(struct ext4_allocation_context *ac,
 	ac->ac_buddy_folio = e4b->bd_buddy_folio;
 	folio_get(ac->ac_buddy_folio);
 	/* store last allocated for subsequent stream allocation */
-	if (ac->ac_flags & EXT4_MB_STREAM_ALLOC) {
-		spin_lock(&sbi->s_md_lock);
-		sbi->s_mb_last_group = ac->ac_f_ex.fe_group;
-		spin_unlock(&sbi->s_md_lock);
-	}
+	if (ac->ac_flags & EXT4_MB_STREAM_ALLOC)
+		/* pairs with smp_load_acquire in ext4_mb_regular_allocator() */
+		smp_store_release(&sbi->s_mb_last_group, ac->ac_f_ex.fe_group);
 	/*
 	 * As we've just preallocated more space than
 	 * user requested originally, we store allocated
@@ -2844,12 +2842,9 @@ ext4_mb_regular_allocator(struct ext4_allocation_context *ac)
 	}
 
 	/* if stream allocation is enabled, use global goal */
-	if (ac->ac_flags & EXT4_MB_STREAM_ALLOC) {
-		/* TBD: may be hot point */
-		spin_lock(&sbi->s_md_lock);
-		ac->ac_g_ex.fe_group = sbi->s_mb_last_group;
-		spin_unlock(&sbi->s_md_lock);
-	}
+	if (ac->ac_flags & EXT4_MB_STREAM_ALLOC)
+		/* pairs with smp_store_release in ext4_mb_use_best_found() */
+		ac->ac_g_ex.fe_group = smp_load_acquire(&sbi->s_mb_last_group);
 
 	/*
 	 * Let's just scan groups to find more-less suitable blocks We
