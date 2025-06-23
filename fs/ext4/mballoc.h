@@ -97,6 +97,15 @@
  */
 #define MB_NUM_ORDERS(sb)		((sb)->s_blocksize_bits + 2)
 
+/*
+ * Number of mb last groups
+ */
+#ifdef CONFIG_SMP
+#define MB_LAST_GROUPS roundup_pow_of_two(nr_cpu_ids)
+#else
+#define MB_LAST_GROUPS 1
+#endif
+
 struct ext4_free_data {
 	/* this links the free block information from sb_info */
 	struct list_head		efd_list;
